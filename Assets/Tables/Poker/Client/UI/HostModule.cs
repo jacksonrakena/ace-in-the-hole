@@ -8,11 +8,17 @@ namespace AceInTheHole.Tables.Poker.Client.UI
         public PokerTableState PokerTableState { get; set; }
 
         VisualElement _hostPanel;
+        Button _leaveTableBtn;
         Button _startGameButton;
         Label _joinCode;
         
         public void Connect(UIDocument document)
-        {            
+        {
+            _leaveTableBtn = document.rootVisualElement.Q<Button>("leave-table-btn");
+            _leaveTableBtn.RegisterCallback<ClickEvent>(s =>
+            {
+                PokerPlayerState.Client_LeaveTable();
+            });
             _hostPanel = document.rootVisualElement.Q<VisualElement>("host-panel");
             _startGameButton = _hostPanel.Q<Button>("start-game");
             _joinCode = _hostPanel.Q<Label>("join-code");

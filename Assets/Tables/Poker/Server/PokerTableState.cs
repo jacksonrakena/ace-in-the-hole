@@ -152,8 +152,7 @@ namespace AceInTheHole.Tables.Poker.Server
                 Debug.Log($"SERVER: {pokerPlayer} connected, assigned seat position {position}");
                 if (_tableHost.Value == -1)
                 {
-                    _tableHost.Value = position;
-                    Debug.Log($"SERVER: {pokerPlayer} assigned as table host");
+                    AssignHost(pokerPlayer, position);
                 }
                 var targetSeat = gameObject.transform.Find("Table/PokerTable1/Seat" + position);
                 if (!pokerPlayer.transform.parent.GetComponent<NetworkObject>().TrySetParent(targetSeat.transform))
@@ -168,21 +167,35 @@ namespace AceInTheHole.Tables.Poker.Server
                 Debug.Log($"ERROR: Player {pokerPlayer} can't join the table as there are no position available.");
             }
         }
+        public void AssignHost(PokerPlayerState pokerPlayer, int position)
+        {
+            _tableHost.Value = position;
+            Debug.Log($"SERVER: {pokerPlayer} assigned as table host");
+        }
         public void LeaveTable(PokerPlayerState pokerPlayer)
         {
             Debug.Log($"SERVER: {pokerPlayer} disconnected");
+            
             _nPlayerCount.Value--;
             _playersBySeatPosition[pokerPlayer.tablePosition.Value] = null;
-
+            
+            if (_tableHost.Value == pokerPlayer.tablePosition.Value)
+            {
+                var otherPlayers = _playersBySeatPosition
+                    .Where(d => d.Value != null).ToList();
+                if (otherPlayers.Any())
+                {
+                    AssignHost(otherPlayers.First().Value, otherPlayers.First().Key);
+                }
+            }
+            
             if (potState.Value.GetCurrentBetStateFor(pokerPlayer) != null)
             {
                 var tsv = potState.Value.Clone();
                 tsv.PlayerBetStates.Remove(pokerPlayer.OwnerClientId);
                 potState.Value = tsv;
             }
-            //OnPlayerLeaveTable?.Invoke(new KeyValuePair<int, PokerPlayerState>(pokerPlayer.tablePosition.Value, pokerPlayer));
-            pokerPlayer.LeaveTableClientRpc();
-            
+
             if (currentPlayerSeatId.Value == pokerPlayer.tablePosition.Value)
             {
                 TryAdvancePlayer();

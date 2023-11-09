@@ -19,6 +19,7 @@ namespace AceInTheHole.Tables.Poker.Client
         public NetworkVariable<bool> ViewingCards = new NetworkVariable<bool>(false, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
         
         public GameObject playerUiPrefab;
+        GameObject playerUiInstance;
 
         PokerTableState _pokerTableState;
 
@@ -31,13 +32,6 @@ namespace AceInTheHole.Tables.Poker.Client
         public void Awake()
         {
             Cards = new NetworkList<Card>(null, NetworkVariableReadPermission.Owner);
-        }
-        public override void OnNetworkDespawn()
-        {
-            if (IsServer)
-            {
-                _pokerTableState.LeaveTable(this);
-            }   
         }
 
         public override void OnDestroy()
@@ -90,11 +84,20 @@ namespace AceInTheHole.Tables.Poker.Client
             //currentPlayerIndicator = player.transform.Find("Current Player Indicator").gameObject;
         }
 
-        [ClientRpc]
-        public void LeaveTableClientRpc()
+        public void Client_LeaveTable()
         {
+            Destroy(playerUiInstance);
+            RequestLeaveTableServerRpc();
             var player = gameObject.transform.parent;
             player.GetComponent<ThirdPersonController>().movementEnabled = true;
+        }
+
+        [ServerRpc]
+        public void RequestLeaveTableServerRpc()
+        {
+            _pokerTableState.LeaveTable(this);
+            transform.parent.GetComponent<NetworkObject>().TrySetParent((GameObject) null);
+            NetworkObject.Despawn();
         }
     
         public override void OnNetworkSpawn()
@@ -133,8 +136,8 @@ namespace AceInTheHole.Tables.Poker.Client
         
             if (IsOwner)
             {
-                var uiObject = Instantiate(playerUiPrefab, new Vector3(0, 0, 0), Quaternion.identity);
-                uiObject.GetComponent<PlayerUI>().Configure(this, _pokerTableState);
+                playerUiInstance = Instantiate(playerUiPrefab, new Vector3(0, 0, 0), Quaternion.identity);
+                playerUiInstance.GetComponent<PlayerUI>().Configure(this, _pokerTableState);
             }
         }
 

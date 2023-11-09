@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using AceInTheHole.Tables.Poker.Server;
 using UnityEngine;
@@ -52,15 +53,18 @@ namespace AceInTheHole.Tables.Poker.Client.UI
         {
             if (RevalidateOnFrame)
             {
-                foreach (var module in _uiModules)
-                {
-                    module.Revalidate();
-                }
+                Revalidate();
             }
         }
+        public bool destroyed = false;
 
+        public void OnDestroy()
+        {
+            destroyed = true;
+        }
         public void Revalidate()
         {
+            if (destroyed) return;
             foreach (var module in _uiModules)
             {
                 module.Revalidate();
