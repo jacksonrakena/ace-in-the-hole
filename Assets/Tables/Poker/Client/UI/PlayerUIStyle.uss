@@ -1,0 +1,5 @@
+.player-status {
+    color: rgb(255, 255, 255);
+    -unity-font-style: bold;
+    font-size: 14px;
+}

@@ -1,0 +1,30 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+    <Style src="project://database/Assets/Scenes/MainMenu/MainMenuStyleSheet.uss?fileID=7433441132597879392&amp;guid=8000ff1dcd117b041962e732074a7cce&amp;type=3#MainMenuStyleSheet" />
+    <ui:VisualElement name="Container" style="flex-grow: 1; align-items: center; justify-content: center;">
+        <ui:VisualElement name="Menu" style="flex-grow: initial; right: auto; bottom: auto; top: auto; left: auto; background-color: rgb(87, 87, 87); background-image: none; flex-shrink: initial; padding-top: 22px; padding-right: 22px; padding-bottom: 22px; padding-left: 22px;">
+            <ui:Label tabindex="-1" text="Ace In The Hole" display-tooltip-when-elided="true" style="font-size: 43px; -unity-text-align: upper-left; align-self: center; color: rgb(255, 255, 255); margin-bottom: 0; -unity-font-style: bold;" />
+            <ui:Label tabindex="-1" text="Development version" display-tooltip-when-elided="true" style="font-size: 16px; -unity-text-align: upper-left; align-self: center; color: rgb(255, 255, 255); margin-top: 0;" />
+            <ui:VisualElement name="Options" style="flex-grow: initial; flex-direction: row;">
+                <ui:VisualElement name="Local-Options" style="flex-grow: 1; width: 50%;">
+                    <ui:Label tabindex="-1" text="Local Network" display-tooltip-when-elided="true" name="Label" style="-unity-text-align: upper-center; -unity-font-style: bold; color: rgb(255, 255, 255);" />
+                    <ui:Button text="Host " display-tooltip-when-elided="true" name="host-game-btn" class="menu-button" style="flex-grow: initial;" />
+                    <ui:Button text="Join" display-tooltip-when-elided="true" name="join-game-btn" class="menu-button" />
+                </ui:VisualElement>
+                <ui:VisualElement name="Relay-Options" style="flex-grow: 1; width: 50%;">
+                    <ui:Label tabindex="-1" text="Internet (Relay)" display-tooltip-when-elided="true" name="Label" style="-unity-text-align: upper-center; -unity-font-style: bold; color: rgb(255, 255, 255);" />
+                    <ui:Button text="Host" display-tooltip-when-elided="true" name="host-relay" class="menu-button" style="flex-grow: initial;" />
+                    <ui:VisualElement style="flex-grow: 1; flex-direction: column;">
+                        <ui:VisualElement name="VisualElement" style="flex-grow: 1; flex-direction: row; white-space: normal;">
+                            <ui:Label tabindex="-1" text="Code:" display-tooltip-when-elided="true" style="-unity-font-style: bold; color: rgb(255, 255, 255); width: 50%; white-space: nowrap; -unity-text-align: upper-center; justify-content: center; align-self: center;" />
+                            <ui:TextField name="relay-join-code" max-length="6" style="-unity-font-style: bold; color: rgb(255, 255, 255); -unity-text-align: middle-left; flex-grow: 1;" />
+                        </ui:VisualElement>
+                        <ui:Button text="Join" display-tooltip-when-elided="true" name="join-relay" class="menu-button" style="flex-grow: 1;" />
+                    </ui:VisualElement>
+                </ui:VisualElement>
+            </ui:VisualElement>
+            <ui:VisualElement style="flex-grow: 1; margin-top: 40px;">
+                <ui:Button text="Quit" display-tooltip-when-elided="true" style="-unity-font-style: bold;" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

@@ -1,0 +1,57 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+    <Style src="project://database/Assets/Scripts/Client/PlayerUIStyle.uss?fileID=7433441132597879392&amp;guid=37dcfd3305afab440a64f2c0b5d45c28&amp;type=3#PlayerUIStyle" />
+    <ui:VisualElement name="Player" style="flex-grow: 1; position: absolute; bottom: 10%; right: 10%;">
+        <ui:VisualElement name="cardcontainer" style="flex-grow: initial; width: 244px; height: 161px; background-color: rgba(0, 0, 0, 0); flex-shrink: initial; position: relative; flex-direction: row;">
+            <ui:VisualElement name="card1" style="flex-grow: 1;" />
+            <ui:VisualElement name="card2" style="flex-grow: 1;" />
+        </ui:VisualElement>
+        <ui:Button text="See Cards" display-tooltip-when-elided="true" name="see-cards-btn" enable-rich-text="true" />
+    </ui:VisualElement>
+    <ui:VisualElement name="Dealer" style="flex-grow: 1; position: absolute; bottom: 76px; right: auto; left: 10px; height: 131px; width: 277px;">
+        <ui:Label tabindex="-1" text="Table Cards" display-tooltip-when-elided="true" style="-unity-font-style: bold; font-size: 18px;" />
+        <ui:VisualElement name="cardcontainer" style="flex-grow: initial; background-color: rgba(0, 0, 0, 0); flex-shrink: initial; position: relative; flex-direction: row; height: 100%;">
+            <ui:VisualElement name="card1" style="flex-grow: 1;" />
+            <ui:VisualElement name="card2" style="flex-grow: 1;" />
+            <ui:VisualElement name="card3" style="flex-grow: 1;" />
+            <ui:VisualElement name="card4" style="flex-grow: 1;" />
+            <ui:VisualElement name="card5" style="flex-grow: 1;" />
+        </ui:VisualElement>
+    </ui:VisualElement>
+    <ui:VisualElement style="flex-grow: initial; flex-direction: column; position: absolute; top: 50%; background-color: rgb(101, 101, 101);">
+        <ui:Label tabindex="-1" display-tooltip-when-elided="true" name="pot-status" text="Pot: $0" class="player-status" />
+        <ui:Label tabindex="-1" display-tooltip-when-elided="true" name="balance-status" text="Balance: $0" class="player-status" />
+    </ui:VisualElement>
+    <ui:VisualElement name="host-panel" style="align-self: flex-start; top: 10%;">
+        <ui:Button text="Start" display-tooltip-when-elided="true" name="start-game" />
+        <ui:Label tabindex="-1" display-tooltip-when-elided="true" name="join-code" style="color: rgb(178, 178, 178);" />
+    </ui:VisualElement>
+    <ui:VisualElement name="turn-ui" style="flex-grow: 1; position: absolute; top: 60%; left: 35%;">
+        <ui:VisualElement name="play-ui" style="flex-grow: 1; position: relative; height: 151px; width: 332px;">
+            <ui:Button text="Play hand ($50)" display-tooltip-when-elided="true" name="play-hand-btn" />
+            <ui:Button text="Fold hand" display-tooltip-when-elided="true" name="fold-hand-btn" />
+        </ui:VisualElement>
+        <ui:VisualElement name="action-ui" style="flex-grow: 1; position: relative; height: 151px; width: 332px;">
+            <ui:VisualElement name="action-buttons" style="flex-grow: 1; display: flex;">
+                <ui:VisualElement style="flex-grow: 1;">
+                    <ui:Button text="Raise" display-tooltip-when-elided="true" name="bet-btn" />
+                </ui:VisualElement>
+                <ui:VisualElement style="flex-grow: 1;">
+                    <ui:Button text="Check" display-tooltip-when-elided="true" name="check-btn" />
+                </ui:VisualElement>
+                <ui:VisualElement style="flex-grow: 1;">
+                    <ui:Button text="Fold" display-tooltip-when-elided="true" name="fold-btn" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+            <ui:VisualElement name="raise-ui" style="flex-grow: 1; position: relative; display: none;">
+                <ui:VisualElement name="raise-partial" style="flex-grow: 1; flex-wrap: nowrap; flex-direction: row; max-height: 50px; align-self: center; justify-content: space-between;">
+                    <ui:Button text="1/4" display-tooltip-when-elided="true" name="raise-quart" />
+                    <ui:Button text="1/2" display-tooltip-when-elided="true" focusable="true" name="raise-half" />
+                    <ui:Button text="3/4" display-tooltip-when-elided="true" name="raise-3quart" />
+                    <ui:Button text="ALL IN" display-tooltip-when-elided="true" name="raise-allin" />
+                </ui:VisualElement>
+                <ui:Slider label="Raise amount" value="50" high-value="100" name="raise-slider" />
+                <ui:Button text="Button" display-tooltip-when-elided="true" name="confirm-raise" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>
