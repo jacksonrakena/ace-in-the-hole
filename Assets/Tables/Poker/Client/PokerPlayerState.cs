@@ -71,19 +71,6 @@ namespace AceInTheHole.Tables.Poker.Client
             //currentPlayerIndicator.SetActive(_pokerTableState.currentPlayerSeatId.Value == tablePosition.Value);
         }
         
-        [ClientRpc]
-        public void JoinTableClientRpc()
-        {
-            var player = gameObject.transform.parent;
-            player.GetComponent<ThirdPersonController>().movementEnabled = false;
-            player.localPosition = new Vector3(0, 0, 0);
-
-            roleInfo = player.transform.Find("Role").GetComponent<TextMeshPro>();
-            bettingAmount = player.transform.Find("BettingAmount").GetComponent<TextMeshPro>();
-            name = ToString();
-            //currentPlayerIndicator = player.transform.Find("Current Player Indicator").gameObject;
-        }
-
         public void Client_LeaveTable()
         {
             Destroy(playerUiInstance);
@@ -99,30 +86,31 @@ namespace AceInTheHole.Tables.Poker.Client
             transform.parent.GetComponent<NetworkObject>().TrySetParent((GameObject) null);
             NetworkObject.Despawn();
         }
-    
-        public override void OnNetworkSpawn()
-        {
-            name = ToString();
-            _pokerTableState = GameObject.Find("Poker Table").GetComponent<PokerTableState>();
 
-            if (IsServer)
+        public void ServerInit(PokerTableState pts)
+        {
+            _pokerTableState = pts;
+            ClientInitClientRpc();
+            _pokerTableState.stage.OnValueChanged += (_, _) =>
             {
-                _pokerTableState.stage.OnValueChanged += (_, _) =>
+                if (_pokerTableState.stage.Value == RoundStage.End)
                 {
-                    if (_pokerTableState.stage.Value == RoundStage.End)
+                    var animator = GetComponentInChildren<NetworkAnimator>();
+                    if (_pokerTableState.winningPlayersBySeatId.Contains(this.tablePosition.Value))
                     {
-                        var animator = GetComponentInChildren<NetworkAnimator>();
-                        if (_pokerTableState.winningPlayersBySeatId.Contains(this.tablePosition.Value))
-                        {
-                            animator.SetTrigger("Won round trigger");
-                        } else if (_pokerTableState.winningPlayersBySeatId.Count > 0)
-                        {
-                            animator.SetTrigger("Lost round trigger");
-                        }
+                        animator.SetTrigger("Won round trigger");
+                    } else if (_pokerTableState.winningPlayersBySeatId.Count > 0)
+                    {
+                        animator.SetTrigger("Lost round trigger");
                     }
-                    // Revalidate();
-                };
-            }
+                }
+            };
+            name = ToString();
+        }
+        [ClientRpc]
+        public void ClientInitClientRpc()
+        {
+            _pokerTableState = gameObject.GetComponentInParent<PokerTableState>();
             if (IsClient)
             {
                 _pokerTableState.potState.OnValueChanged += (_, _) => Revalidate();
@@ -133,17 +121,26 @@ namespace AceInTheHole.Tables.Poker.Client
                 
                 // Revalidate();
             }
-        
             if (IsOwner)
             {
                 playerUiInstance = Instantiate(playerUiPrefab, new Vector3(0, 0, 0), Quaternion.identity);
                 playerUiInstance.GetComponent<PlayerUI>().Configure(this, _pokerTableState);
             }
+            name = ToString();
+            
+            var player = gameObject.transform.parent;
+            player.GetComponent<ThirdPersonController>().movementEnabled = false;
+            player.localPosition = new Vector3(0, 0, 0);
+
+            roleInfo = player.transform.Find("Role").GetComponent<TextMeshPro>();
+            bettingAmount = player.transform.Find("BettingAmount").GetComponent<TextMeshPro>();
+            name = ToString();
         }
 
         public override string ToString()
         {
-            return $"Poker state for {OwnerClientId} (seat {tablePosition.Value})";
+            if (_pokerTableState == null) return $"Client {OwnerClientId}";
+            return $"State for {OwnerClientId} (seat {tablePosition.Value}), sitting at {_pokerTableState.gameObject.name}";
         }
     }
 }

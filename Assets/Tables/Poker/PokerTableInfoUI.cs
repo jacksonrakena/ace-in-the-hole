@@ -12,30 +12,30 @@ namespace AceInTheHole.Tables.Poker
 
         public void PlayerRequestsJoin()
         {
-            if (IsClient)
-            {
-                Debug.Log("Player requests to join table");
-                JoinTableServerRpc();
-            }
+            if (IsClient) JoinTableServerRpc();
         }
 
         [ServerRpc(RequireOwnership = false)]
         public void JoinTableServerRpc(ServerRpcParams prams = default)
         {
-            Debug.Log("Server acknowledging JoinTable request from " +prams.Receive.SenderClientId);
-
             if (TableState.AllPlayersAtTable.Values.Any(e => e.OwnerClientId == prams.Receive.SenderClientId))
             {
                 return;
             }
-            var playerStatePrefab = Instantiate(PlayerStatePrefab, 
+            
+            // Create the state object for the player being at this specific table
+            var playerStateObject = Instantiate(PlayerStatePrefab, 
                 NetworkManager.Singleton.ConnectedClients[prams.Receive.SenderClientId].PlayerObject.transform);
-            var no = playerStatePrefab.GetComponent<NetworkObject>();
-            //no.SpawnWithObservers = false;
-            no.SpawnWithOwnership(prams.Receive.SenderClientId);
-            no.TrySetParent(NetworkManager.Singleton.ConnectedClients[prams.Receive.SenderClientId].PlayerObject.transform, worldPositionStays:false);
-            //no.NetworkShow(prams.Receive.SenderClientId);
-            TableState.JoinTable(playerStatePrefab.GetComponent<PokerPlayerState>());
+            
+            // Spawn the state object over the network and pass ownership to the player
+            var playerStateNetworking = playerStateObject.GetComponent<NetworkObject>();
+            playerStateNetworking.SpawnWithOwnership(prams.Receive.SenderClientId);
+            
+            // Parent the state object under the player
+            playerStateNetworking.TrySetParent(NetworkManager.Singleton.ConnectedClients[prams.Receive.SenderClientId].PlayerObject.transform, worldPositionStays:false);
+            
+            // Access the player state script, and configure it on the server
+            TableState.JoinTable(playerStateObject.GetComponent<PokerPlayerState>());
         }
     }
 }

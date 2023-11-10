@@ -24,14 +24,23 @@ namespace AceInTheHole.Tables.Poker.Server
         /*
          * Connected players (including those not playing in a round), keyed by their seat position
          */
-        readonly Dictionary<int, PokerPlayerState> _playersBySeatPosition = new Dictionary<int, PokerPlayerState>
+        readonly Dictionary<int, PokerPlayerState> _playersBySeatPosition = new Dictionary<int, PokerPlayerState>();
+
+        public override void OnNetworkSpawn()
         {
-            {0, null},
-            {1, null},
-            {2, null},
-            {3, null},
-            {4, null}
-        };
+            if (IsServer)
+            {
+                _playersBySeatPosition.Clear();
+                var i = 0;
+                foreach (Transform child in SeatContainer.transform)
+                {
+                    _playersBySeatPosition[i] = null;
+                    i++;
+                }
+            }
+        }
+
+        public GameObject SeatContainer;
 
         /**
          * The host (dealer) of the table.
@@ -149,32 +158,36 @@ namespace AceInTheHole.Tables.Poker.Server
                 var position = _playersBySeatPosition.First(e => e.Value == null).Key;
                 _playersBySeatPosition[position] = pokerPlayer;
                 pokerPlayer.tablePosition.Value = position;
-                Debug.Log($"SERVER: {pokerPlayer} connected, assigned seat position {position}");
+                Log($"{pokerPlayer} joined table, assigned seat position {position}");
                 if (_tableHost.Value == -1)
                 {
                     AssignHost(pokerPlayer, position);
                 }
-                var targetSeat = gameObject.transform.Find("Table/PokerTable1/Seat" + position);
+                var targetSeat = SeatContainer.transform.Find("Seat" + position);
                 if (!pokerPlayer.transform.parent.GetComponent<NetworkObject>().TrySetParent(targetSeat.transform))
                 {
                     Debug.Log($"Failed to move {pokerPlayer} to seat {targetSeat}");
                 }
                 _nPlayerCount.Value++;
-                pokerPlayer.JoinTableClientRpc();
+                pokerPlayer.ServerInit(this);
             }
             else
             {
-                Debug.Log($"ERROR: Player {pokerPlayer} can't join the table as there are no position available.");
+                Log($"Player {pokerPlayer} can't join the table as there are no position available.");
             }
+        }
+        public void Log(string message)
+        {
+            Debug.Log($"{gameObject.name}: {message}");
         }
         public void AssignHost(PokerPlayerState pokerPlayer, int position)
         {
             _tableHost.Value = position;
-            Debug.Log($"SERVER: {pokerPlayer} assigned as table host");
+            Log($"{pokerPlayer} assigned as table host");
         }
         public void LeaveTable(PokerPlayerState pokerPlayer)
         {
-            Debug.Log($"SERVER: {pokerPlayer} disconnected");
+            Log($"{pokerPlayer} left table {gameObject.name}");
             
             _nPlayerCount.Value--;
             _playersBySeatPosition[pokerPlayer.tablePosition.Value] = null;
