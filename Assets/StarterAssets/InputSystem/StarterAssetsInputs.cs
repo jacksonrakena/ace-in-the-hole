@@ -28,7 +28,6 @@ namespace AceInTheHole.StarterAssets.InputSystem
 
 		public void OnJump(InputValue value)
 		{
-			Debug.Log($"Jump={value.isPressed}");
 			jump = value.isPressed;
 		}
 

@@ -1,11 +1,14 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using AceInTheHole.Engine;
 using AceInTheHole.Tables.Poker.Client;
 using AceInTheHole.Tables.Poker.Server.Betting;
 using AceInTheHole.Tables.Poker.Server.PlayIn;
+using JetBrains.Annotations;
 using Unity.Netcode;
+using Unity.VisualScripting;
 using UnityEngine;
 namespace AceInTheHole.Tables.Poker.Server
 {
@@ -75,19 +78,23 @@ namespace AceInTheHole.Tables.Poker.Server
          */
         public NetworkVariable<PotState> potState = new NetworkVariable<PotState>(new PotState());
 
-        /*
-         * The join code (shown to the player to share to other users)
+        /**
+         * Returns the next seat after the specified player, or the first seat at the table if player is null.
          */
-        public string JoinCode;
-        
-        public KeyValuePair<int, PokerPlayerState> FirstOccupiedSeat(int excluding = -1)
+        public PokerPlayerState NextOccupiedSeatAfter(PokerPlayerState player = null)
         {
-            return _playersBySeatPosition.OrderBy(e => e.Key).FirstOrDefault(e => e.Key != excluding && e.Value != null);
-        }
-        
-        public KeyValuePair<int, PokerPlayerState> FirstUnoccupiedSeat(int excluding = -1)
-        {
-            return _playersBySeatPosition.OrderBy(e => e.Key).FirstOrDefault(e => e.Key != excluding && e.Value == null);
+            var nextOrdinalPosition = _playersBySeatPosition
+                .Where(e => e.Value != null)
+                .OrderBy(e => e.Key)
+                .Cast<KeyValuePair<int, PokerPlayerState>?>()
+                .FirstOrDefault(e => e != null && (player == null || e.Value.Key > player.tablePosition.Value));
+
+            if (nextOrdinalPosition != null) return nextOrdinalPosition.Value.Value;
+            
+            return _playersBySeatPosition
+                    .OrderBy(e => e.Key)
+                    .Where(e => e.Value != null)
+                    .FirstOrDefault(e => player == null || e.Key != player.tablePosition.Value).Value;
         }
         
         public void TryAdvancePlayer()
@@ -101,12 +108,12 @@ namespace AceInTheHole.Tables.Poker.Server
                 players = AllPlayersAtTable;
             }
             
-            var remainingPlayers = players.Where(k => k.Key > currentPlayerSeatId.Value).ToList();
+            var remainingPlayers = players.Where(k => k.tablePosition.Value > currentPlayerSeatId.Value).ToList();
             if (remainingPlayers.Any())
             {
-                currentPlayerSeatId.Value = remainingPlayers.OrderBy(e => e.Key).First().Key;
+                currentPlayerSeatId.Value = remainingPlayers.OrderBy(e => e.tablePosition.Value).First().tablePosition.Value;
             }
-            else Turn();
+            else ProcessEndOfRotation();
         }
         
         public void Awake()
@@ -117,42 +124,39 @@ namespace AceInTheHole.Tables.Poker.Server
 
         public PokerPlayerState CurrentPokerPlayer => _playersBySeatPosition[currentPlayerSeatId.Value];
 
-        public Dictionary<int, PokerPlayerState> AllPlayersAtTable => _playersBySeatPosition.Where(e => e.Value != null).ToDictionary(e => e.Key, e => e.Value);
+        public IEnumerable<PokerPlayerState> AllPlayersAtTable => _playersBySeatPosition.Values.NotNull();
 
-        public Dictionary<int, PokerPlayerState> AllPlayersRemainingInHand =>
+        public IEnumerable<PokerPlayerState> AllPlayersRemainingInHand =>
             _playersBySeatPosition
-                .Where(e => e.Value != null 
+                .Values
+                .Where(e => e != null
                             && this.potState.Value.PlayerBetStates != null
-                            && this.potState.Value.PlayerBetStates.ContainsKey(e.Value.OwnerClientId)
-                            && this.potState.Value.PlayerBetStates[e.Value.OwnerClientId].InRound)
-                .ToDictionary(e => e.Key, e => e.Value);
+                            && this.potState.Value.PlayerBetStates.ContainsKey(e.OwnerClientId)
+                            && this.potState.Value.PlayerBetStates[e.OwnerClientId].InRound);
+        
+        
+        public GameObject PlayerStatePrefab;
 
-        PokerPlayerState LittleBlind
+        public void JoinTable(ulong clientId)
         {
-            get
+            if (AllPlayersAtTable.Any(e => e.OwnerClientId == clientId))
             {
-                if (AllPlayersAtTable.Values.Any(e => e.isLittleBlind.Value)) return AllPlayersAtTable.FirstOrDefault(e => e.Value.isLittleBlind.Value).Value;
-                var player = FirstOccupiedSeat().Value;
-                player.isLittleBlind.Value = true;
-                return player;
+                return;
             }
-        }
+            
+            // Create the state object for the player being at this specific table
+            var playerStateObject = Instantiate(PlayerStatePrefab, 
+                NetworkManager.Singleton.ConnectedClients[clientId].PlayerObject.transform);
+            
+            // Spawn the state object over the network and pass ownership to the player
+            var playerStateNetworking = playerStateObject.GetComponent<NetworkObject>();
+            playerStateNetworking.SpawnWithOwnership(clientId);
+            
+            // Parent the state object under the player
+            playerStateNetworking.TrySetParent(NetworkManager.Singleton.ConnectedClients[clientId].PlayerObject.transform, worldPositionStays:false);
 
-        public PokerPlayerState BigBlind
-        {
-            get
-            {
-                if (AllPlayersAtTable.Values.Any(e => e.isBigBlind.Value)) return AllPlayersAtTable.FirstOrDefault(e => e.Value.isBigBlind.Value).Value;
-                PokerPlayerState little = LittleBlind;
-                PokerPlayerState pokerPlayer = FirstOccupiedSeat(little.tablePosition.Value).Value;
-                pokerPlayer.isBigBlind.Value = true;
-                return pokerPlayer;
-            }
-        }
-
-
-        public void JoinTable(PokerPlayerState pokerPlayer)
-        {
+            var pokerPlayer = playerStateObject.GetComponent<PokerPlayerState>();
+            
             if (_playersBySeatPosition.Any(e => e.Value == null))
             {
                 var position = _playersBySeatPosition.First(e => e.Value == null).Key;
@@ -169,7 +173,7 @@ namespace AceInTheHole.Tables.Poker.Server
                     Debug.Log($"Failed to move {pokerPlayer} to seat {targetSeat}");
                 }
                 _nPlayerCount.Value++;
-                pokerPlayer.ServerInit(this);
+                pokerPlayer.ServerConnectToTable(this);
             }
             else
             {
@@ -214,14 +218,54 @@ namespace AceInTheHole.Tables.Poker.Server
                 TryAdvancePlayer();
             }
         }
+        
+        PokerPlayerState TryAdvanceLittleBlind()
+        {
+            if (AllPlayersAtTable.Any(e => e.isLittleBlind.Value))
+            {
+                var current = AllPlayersAtTable.First(e => e.isLittleBlind.Value);
+                var next = NextOccupiedSeatAfter(current);
+                current.isLittleBlind.Value = false;
+                next.isLittleBlind.Value = true;
+                return next;
+            }
+            
+            var player = NextOccupiedSeatAfter();
+            player.isLittleBlind.Value = true;
+            return player;
+        }
+        [CanBeNull] PokerPlayerState GetCurrentLittleBlind()
+        {
+            if (_playersBySeatPosition.Any(e => e.Value.isLittleBlind.Value))
+            {
+                return _playersBySeatPosition.First(e => e.Value.isLittleBlind.Value).Value;
+            }
+            return null;
+        }
+        
+        [CanBeNull] PokerPlayerState TryAdvanceBigBlind()
+        {
+            if (AllPlayersAtTable.Any(e => e.isBigBlind.Value))
+            {
+                var current = AllPlayersAtTable.First(e => e.isBigBlind.Value);
+                var next = NextOccupiedSeatAfter(current);
+                current.isBigBlind.Value = false;
+                next.isBigBlind.Value = true;
+                return next;
+            }
+            
+            var player = NextOccupiedSeatAfter(GetCurrentLittleBlind());
+            player.isBigBlind.Value = true;
+            return player;
+        }
 
         public void StartPlayInRound(ref PotState tsv)
         {
             tsv.CurrentRequiredBet = 50;
             tsv.PlayerBetStates = new Dictionary<ulong, PlayerBetState>();
-            var lb = LittleBlind;
-            var bb = BigBlind;
-            Debug.Log("Picked blinds");
+            var lb = TryAdvanceLittleBlind();
+            var bb = TryAdvanceBigBlind();
+            Debug.Log($"Little blind={lb}, Big blind={bb}");
 
             var smallBetHalf = (int)(0.5f * tsv.CurrentRequiredBet);
 
@@ -246,7 +290,7 @@ namespace AceInTheHole.Tables.Poker.Server
             stage.Value = RoundStage.PlayIn;
         }
         
-        public void Turn()
+        public void ProcessEndOfRotation()
         {
             PotState tsv;
             if (potState.Value.PlayerBetStates == null)
@@ -261,9 +305,10 @@ namespace AceInTheHole.Tables.Poker.Server
             if (stage.Value != RoundStage.Setup)
             {
                 var remainingPlayers = AllPlayersRemainingInHand;
-                if (remainingPlayers.Count == 1)
+                if (remainingPlayers.Count() == 1)
                 {
-                    potState.Value = EndGame().GetAwaiter().GetResult();
+                    StartCoroutine(EndGame());
+                    potState.Value = new PotState();
                     return;
                 }   
             }
@@ -271,7 +316,6 @@ namespace AceInTheHole.Tables.Poker.Server
             switch (stage.Value)
             {
                 case RoundStage.Setup:
-                    Debug.Log("Starting play in round");
                     StartPlayInRound(ref tsv);
                     break;
                 case RoundStage.PlayIn:
@@ -289,7 +333,8 @@ namespace AceInTheHole.Tables.Poker.Server
                     stage.Value = RoundStage.River;
                     break;
                 case RoundStage.River:
-                    tsv = EndGame().GetAwaiter().GetResult();
+                    StartCoroutine(EndGame());
+                    tsv = new PotState();
                     break;
                 case RoundStage.End:
                     break;
@@ -297,8 +342,7 @@ namespace AceInTheHole.Tables.Poker.Server
                     throw new ArgumentOutOfRangeException();
             }
             potState.Value = tsv;
-            currentPlayerSeatId.Value = FirstOccupiedSeat().Key;
-            Debug.Log($"Turn complete, going to {stage.Value}");
+            currentPlayerSeatId.Value = NextOccupiedSeatAfter().tablePosition.Value;
         }
 
         public List<KeyValuePair<PokerPlayerState, Set>> CurrentLeaders()
@@ -307,22 +351,22 @@ namespace AceInTheHole.Tables.Poker.Server
 
             foreach (var player in AllPlayersRemainingInHand)
             {
-                foreach (Set set in Set.FindAllPossibleSets(player.Value.Cards, VisibleTableCards))
+                foreach (Set set in Set.FindAllPossibleSets(player.Cards, VisibleTableCards))
                 {
                     if (list.Count == 0)
                     {
-                        list.Add(new KeyValuePair<PokerPlayerState, Set>(player.Value, set));
+                        list.Add(new KeyValuePair<PokerPlayerState, Set>(player, set));
                     }
                     else
                     {
                         if (set > list.First().Value)
                         {
                             list.Clear();
-                            list.Add(new KeyValuePair<PokerPlayerState, Set>(player.Value, set));
+                            list.Add(new KeyValuePair<PokerPlayerState, Set>(player, set));
                         }
                         else if (list.First().Value.CompareTo(set) == 0)
                         {
-                            list.Add(new KeyValuePair<PokerPlayerState, Set>(player.Value, set));
+                            list.Add(new KeyValuePair<PokerPlayerState, Set>(player, set));
                         }
                     }
                 }
@@ -330,7 +374,7 @@ namespace AceInTheHole.Tables.Poker.Server
             return list;
         }
 
-        async Awaitable<PotState> EndGame()
+        IEnumerator EndGame()
         {
             var winners = CurrentLeaders();
             
@@ -344,12 +388,12 @@ namespace AceInTheHole.Tables.Poker.Server
             currentPlayerSeatId.Value = -1;
                     
             Debug.Log($"Players [{string.Join(", ", winners.Select(e => e.Key.ToString()))}] win.");
-            
-            await Awaitable.WaitForSecondsAsync(5);
+
+            yield return new WaitForSeconds(5);
 
             foreach (var player in AllPlayersAtTable)
             {
-                player.Value.Cards.Clear();
+                player.Cards.Clear();
             }
             
             stage.Value = RoundStage.Setup;
@@ -358,8 +402,6 @@ namespace AceInTheHole.Tables.Poker.Server
             _dealerCards.Clear();
             VisibleTableCards.Clear();
             _deck.Reset();
-
-            return new PotState();
         }
 
         [ServerRpc(RequireOwnership = false)]
@@ -368,8 +410,7 @@ namespace AceInTheHole.Tables.Poker.Server
             var playerRequesting = _playersBySeatPosition.FirstOrDefault(d => d.Value.OwnerClientId == prams.Receive.SenderClientId);
             if (playerRequesting.Value.IsTableHost != true) return;
             if (stage.Value != RoundStage.Setup) return;
-            Debug.Log("Requested game start from " + playerRequesting.Key);
-            Turn();
+            ProcessEndOfRotation();
         }
 
         [ServerRpc(RequireOwnership = false)]

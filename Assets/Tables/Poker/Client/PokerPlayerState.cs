@@ -87,54 +87,76 @@ namespace AceInTheHole.Tables.Poker.Client
             NetworkObject.Despawn();
         }
 
-        public void ServerInit(PokerTableState pts)
+        public void RevalidateAnimationState(RoundStage old, RoundStage current)
+        {
+            if (_pokerTableState.stage.Value == RoundStage.End)
+            {
+                var animator = GetComponentInParent<NetworkAnimator>();
+                if (_pokerTableState.winningPlayersBySeatId.Contains(this.tablePosition.Value))
+                {
+                    animator.SetTrigger("Won round trigger");
+                } else if (_pokerTableState.winningPlayersBySeatId.Count > 0)
+                {
+                    animator.SetTrigger("Lost round trigger");
+                }
+            }
+        }
+
+        public void OnPotStateChanged(PotState old, PotState current) => Revalidate();
+        public void OnCurrentPlayerChanged(int oldSeat, int newSeat) => Revalidate();
+        public void OnWinningPlayersChanged(NetworkListEvent<int> changeData) => Revalidate();
+        public void OnBlindsChange(bool oldValue, bool newValue) => Revalidate();
+
+        public void ServerConnectToTable(PokerTableState pts)
         {
             _pokerTableState = pts;
-            ClientInitClientRpc();
-            _pokerTableState.stage.OnValueChanged += (_, _) =>
-            {
-                if (_pokerTableState.stage.Value == RoundStage.End)
-                {
-                    var animator = GetComponentInChildren<NetworkAnimator>();
-                    if (_pokerTableState.winningPlayersBySeatId.Contains(this.tablePosition.Value))
-                    {
-                        animator.SetTrigger("Won round trigger");
-                    } else if (_pokerTableState.winningPlayersBySeatId.Count > 0)
-                    {
-                        animator.SetTrigger("Lost round trigger");
-                    }
-                }
-            };
+            ClientConnectToTableClientRpc();
+            _pokerTableState.stage.OnValueChanged += RevalidateAnimationState;
             name = ToString();
         }
+        
         [ClientRpc]
-        public void ClientInitClientRpc()
+        public void ClientConnectToTableClientRpc()
         {
             _pokerTableState = gameObject.GetComponentInParent<PokerTableState>();
-            if (IsClient)
-            {
-                _pokerTableState.potState.OnValueChanged += (_, _) => Revalidate();
-                _pokerTableState.currentPlayerSeatId.OnValueChanged += (_, _) => Revalidate();
-                _pokerTableState.winningPlayersBySeatId.OnListChanged += (_) => Revalidate();
-                isBigBlind.OnValueChanged += (_, _) => Revalidate();
-                isLittleBlind.OnValueChanged += (_, _) => Revalidate();
-                
-                // Revalidate();
-            }
+            
+            _pokerTableState.potState.OnValueChanged += OnPotStateChanged;
+            _pokerTableState.currentPlayerSeatId.OnValueChanged += OnCurrentPlayerChanged;
+            _pokerTableState.winningPlayersBySeatId.OnListChanged += OnWinningPlayersChanged;
+            isBigBlind.OnValueChanged += OnBlindsChange;
+            isLittleBlind.OnValueChanged += OnBlindsChange;
+            
+            var player = gameObject.transform.parent;
+            
             if (IsOwner)
             {
                 playerUiInstance = Instantiate(playerUiPrefab, new Vector3(0, 0, 0), Quaternion.identity);
                 playerUiInstance.GetComponent<PlayerUI>().Configure(this, _pokerTableState);
+                
+                player.GetComponent<ThirdPersonController>().movementEnabled = false;
+                player.localPosition = new Vector3(0, 0, 0);
             }
-            name = ToString();
             
-            var player = gameObject.transform.parent;
-            player.GetComponent<ThirdPersonController>().movementEnabled = false;
-            player.localPosition = new Vector3(0, 0, 0);
 
             roleInfo = player.transform.Find("Role").GetComponent<TextMeshPro>();
             bettingAmount = player.transform.Find("BettingAmount").GetComponent<TextMeshPro>();
             name = ToString();
+        }
+
+        public override void OnNetworkDespawn()
+        {
+            if (IsClient)
+            {
+                _pokerTableState.potState.OnValueChanged -= OnPotStateChanged;
+                _pokerTableState.currentPlayerSeatId.OnValueChanged -= OnCurrentPlayerChanged;
+                _pokerTableState.winningPlayersBySeatId.OnListChanged -= OnWinningPlayersChanged;
+                isBigBlind.OnValueChanged -= OnBlindsChange;
+                isLittleBlind.OnValueChanged -= OnBlindsChange;
+            }
+            if (IsServer)
+            {
+                _pokerTableState.stage.OnValueChanged -= RevalidateAnimationState;
+            }
         }
 
         public override string ToString()

@@ -36,7 +36,7 @@ namespace AceInTheHole.Tables.Poker.Client.UI
             _hostPanel.visible = isTableHost; 
             IUserInterfaceModule.SetVisible(_startGameButton, 
                 isTableHost && PokerTableState._nPlayerCount.Value > 1 && PokerTableState.stage.Value == RoundStage.Setup);
-            _joinCode.text = PokerTableState.JoinCode != null ? $"Join code: {PokerTableState.JoinCode}" : null;
+            //_joinCode.text = PokerTableState.JoinCode != null ? $"Join code: {PokerTableState.JoinCode}" : null;
         }
     }
 }
