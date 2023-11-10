@@ -10,23 +10,27 @@ using JetBrains.Annotations;
 using Unity.Netcode;
 using Unity.VisualScripting;
 using UnityEngine;
+using UnityEngine.Serialization;
 namespace AceInTheHole.Tables.Poker.Server
 {
     public class PokerTableState : NetworkBehaviour
     {
+        [Tooltip("The GameObject on the table model containing all of the seat objects as children.")]
+        public GameObject SeatContainer;
+        
         /*
-         * The deck.
+         * The host (dealer) of the table.
+         * At the moment, this variable only changes when the table host disconnects.
          */
+        public NetworkVariable<int> tableHost = new NetworkVariable<int>(-1);
+
+        /*
+         * The number of players at this table.
+         */
+        public NetworkVariable<int> playerCount = new NetworkVariable<int>(0);
+        
         readonly Deck _deck = new Deck();
-        
-        /*
-         * All five dealer cards.
-         */
         readonly List<Card> _dealerCards = new List<Card>();
-        
-        /*
-         * Connected players (including those not playing in a round), keyed by their seat position
-         */
         readonly Dictionary<int, PokerPlayerState> _playersBySeatPosition = new Dictionary<int, PokerPlayerState>();
 
         public override void OnNetworkSpawn()
@@ -42,16 +46,7 @@ namespace AceInTheHole.Tables.Poker.Server
                 }
             }
         }
-
-        public GameObject SeatContainer;
-
-        /**
-         * The host (dealer) of the table.
-         * At the moment, this variable only changes when the table host disconnects.
-         */
-        public NetworkVariable<int> _tableHost = new NetworkVariable<int>(-1);
-
-        public NetworkVariable<int> _nPlayerCount = new NetworkVariable<int>(0);
+        
         
         /*
          * The cards that players can see on the table.
@@ -71,17 +66,22 @@ namespace AceInTheHole.Tables.Poker.Server
         /*
          * The seat position of the winning player. (-1 if no player is playing)
          */
-        public NetworkList<int> winningPlayersBySeatId;
+        public NetworkList<int> WinningPlayersBySeatId;
         
         /*
-         * The state of the pot (including betting, side pots, folds, etc)
+         * The current raise amount, that is, how much each player must bet to continue playing.
          */
-        public NetworkVariable<PotState> potState = new NetworkVariable<PotState>(new PotState());
+        public NetworkVariable<int> currentRequiredBet;
+        
+        /*
+         * The total size of the pot available to the winner of this round.
+         */
+        public NetworkVariable<int> pot;
 
         /**
          * Returns the next seat after the specified player, or the first seat at the table if player is null.
          */
-        public PokerPlayerState NextOccupiedSeatAfter(PokerPlayerState player = null)
+        PokerPlayerState NextOccupiedSeatAfter(PokerPlayerState player = null) 
         {
             var nextOrdinalPosition = _playersBySeatPosition
                 .Where(e => e.Value != null)
@@ -97,7 +97,7 @@ namespace AceInTheHole.Tables.Poker.Server
                     .FirstOrDefault(e => player == null || e.Key != player.tablePosition.Value).Value;
         }
         
-        public void TryAdvancePlayer()
+        void TryAdvancePlayer()
         {
             var players = AllPlayersRemainingInHand;
             
@@ -119,10 +119,10 @@ namespace AceInTheHole.Tables.Poker.Server
         public void Awake()
         {
             VisibleTableCards = new();
-            winningPlayersBySeatId = new();
+            WinningPlayersBySeatId = new();
         }
 
-        public PokerPlayerState CurrentPokerPlayer => _playersBySeatPosition[currentPlayerSeatId.Value];
+        [CanBeNull] public PokerPlayerState CurrentPlayer => currentPlayerSeatId.Value == -1 ? null : _playersBySeatPosition[currentPlayerSeatId.Value];
 
         public IEnumerable<PokerPlayerState> AllPlayersAtTable => _playersBySeatPosition.Values.NotNull();
 
@@ -130,9 +130,7 @@ namespace AceInTheHole.Tables.Poker.Server
             _playersBySeatPosition
                 .Values
                 .Where(e => e != null
-                            && this.potState.Value.PlayerBetStates != null
-                            && this.potState.Value.PlayerBetStates.ContainsKey(e.OwnerClientId)
-                            && this.potState.Value.PlayerBetStates[e.OwnerClientId].InRound);
+                            && e.betState.Value is { InRound: true });
         
         
         public GameObject PlayerStatePrefab;
@@ -163,7 +161,7 @@ namespace AceInTheHole.Tables.Poker.Server
                 _playersBySeatPosition[position] = pokerPlayer;
                 pokerPlayer.tablePosition.Value = position;
                 Log($"{pokerPlayer} joined table, assigned seat position {position}");
-                if (_tableHost.Value == -1)
+                if (tableHost.Value == -1)
                 {
                     AssignHost(pokerPlayer, position);
                 }
@@ -172,7 +170,7 @@ namespace AceInTheHole.Tables.Poker.Server
                 {
                     Debug.Log($"Failed to move {pokerPlayer} to seat {targetSeat}");
                 }
-                _nPlayerCount.Value++;
+                playerCount.Value++;
                 pokerPlayer.ServerConnectToTable(this);
             }
             else
@@ -186,17 +184,17 @@ namespace AceInTheHole.Tables.Poker.Server
         }
         public void AssignHost(PokerPlayerState pokerPlayer, int position)
         {
-            _tableHost.Value = position;
+            tableHost.Value = position;
             Log($"{pokerPlayer} assigned as table host");
         }
         public void LeaveTable(PokerPlayerState pokerPlayer)
         {
             Log($"{pokerPlayer} left table {gameObject.name}");
             
-            _nPlayerCount.Value--;
+            playerCount.Value--;
             _playersBySeatPosition[pokerPlayer.tablePosition.Value] = null;
             
-            if (_tableHost.Value == pokerPlayer.tablePosition.Value)
+            if (tableHost.Value == pokerPlayer.tablePosition.Value)
             {
                 var otherPlayers = _playersBySeatPosition
                     .Where(d => d.Value != null).ToList();
@@ -206,11 +204,9 @@ namespace AceInTheHole.Tables.Poker.Server
                 }
             }
             
-            if (potState.Value.GetCurrentBetStateFor(pokerPlayer) != null)
+            if (pokerPlayer.betState.Value != null)
             {
-                var tsv = potState.Value.Clone();
-                tsv.PlayerBetStates.Remove(pokerPlayer.OwnerClientId);
-                potState.Value = tsv;
+                pokerPlayer.betState.Value = null;
             }
 
             if (currentPlayerSeatId.Value == pokerPlayer.tablePosition.Value)
@@ -243,7 +239,7 @@ namespace AceInTheHole.Tables.Poker.Server
             return null;
         }
         
-        [CanBeNull] PokerPlayerState TryAdvanceBigBlind()
+        PokerPlayerState TryAdvanceBigBlind()
         {
             if (AllPlayersAtTable.Any(e => e.isBigBlind.Value))
             {
@@ -259,25 +255,24 @@ namespace AceInTheHole.Tables.Poker.Server
             return player;
         }
 
-        public void StartPlayInRound(ref PotState tsv)
+        public void StartPlayInRound()
         {
-            tsv.CurrentRequiredBet = 50;
-            tsv.PlayerBetStates = new Dictionary<ulong, PlayerBetState>();
+            currentRequiredBet.Value = 50;
             var lb = TryAdvanceLittleBlind();
             var bb = TryAdvanceBigBlind();
             Debug.Log($"Little blind={lb}, Big blind={bb}");
 
-            var smallBetHalf = (int)(0.5f * tsv.CurrentRequiredBet);
+            var smallBetHalf = (int)(0.5f * currentRequiredBet.Value);
 
-            lb.balance.Value = (int)(lb.balance.Value - smallBetHalf);
-            tsv.Pot = (tsv.Pot + smallBetHalf);
-            tsv.PlayerBetStates.Add(lb.OwnerClientId, new PlayerBetState { Amount = smallBetHalf, InRound = true});
+            lb.balance.Value -= smallBetHalf;
+            pot.Value += smallBetHalf;
+            lb.betState.Value = new PlayerBetState { Amount = smallBetHalf, InRound = true };
             lb.Cards.Add(_deck.Draw());
             lb.Cards.Add(_deck.Draw());
 
-            bb.balance.Value = (int)(bb.balance.Value - tsv.CurrentRequiredBet);
-            tsv.Pot = (tsv.Pot + tsv.CurrentRequiredBet);
-            tsv.PlayerBetStates.Add(bb.OwnerClientId, new PlayerBetState { Amount = tsv.CurrentRequiredBet, InRound = true });
+            bb.balance.Value -= currentRequiredBet.Value;
+            pot.Value += currentRequiredBet.Value;
+            bb.betState.Value = new PlayerBetState { Amount = currentRequiredBet.Value, InRound = true };
             bb.Cards.Add(_deck.Draw());
             bb.Cards.Add(_deck.Draw());
                     
@@ -292,23 +287,12 @@ namespace AceInTheHole.Tables.Poker.Server
         
         public void ProcessEndOfRotation()
         {
-            PotState tsv;
-            if (potState.Value.PlayerBetStates == null)
-            {
-                tsv = new PotState
-                {
-                    PlayerBetStates = new Dictionary<ulong, PlayerBetState>()
-                };
-            }
-            else tsv = potState.Value.Clone();
-            
             if (stage.Value != RoundStage.Setup)
             {
                 var remainingPlayers = AllPlayersRemainingInHand;
                 if (remainingPlayers.Count() == 1)
                 {
                     StartCoroutine(EndGame());
-                    potState.Value = new PotState();
                     return;
                 }   
             }
@@ -316,7 +300,7 @@ namespace AceInTheHole.Tables.Poker.Server
             switch (stage.Value)
             {
                 case RoundStage.Setup:
-                    StartPlayInRound(ref tsv);
+                    StartPlayInRound();
                     break;
                 case RoundStage.PlayIn:
                     stage.Value = RoundStage.Flop;
@@ -334,14 +318,12 @@ namespace AceInTheHole.Tables.Poker.Server
                     break;
                 case RoundStage.River:
                     StartCoroutine(EndGame());
-                    tsv = new PotState();
                     break;
                 case RoundStage.End:
                     break;
                 default:
                     throw new ArgumentOutOfRangeException();
             }
-            potState.Value = tsv;
             currentPlayerSeatId.Value = NextOccupiedSeatAfter().tablePosition.Value;
         }
 
@@ -380,8 +362,8 @@ namespace AceInTheHole.Tables.Poker.Server
             
             foreach (var winner in winners)
             {
-                winningPlayersBySeatId.Add(winner.Key.tablePosition.Value);
-                winner.Key.balance.Value += potState.Value.Pot / winners.Count;
+                WinningPlayersBySeatId.Add(winner.Key.tablePosition.Value);
+                winner.Key.balance.Value += pot.Value / winners.Count;
             }
             
             stage.Value = RoundStage.End;
@@ -394,11 +376,13 @@ namespace AceInTheHole.Tables.Poker.Server
             foreach (var player in AllPlayersAtTable)
             {
                 player.Cards.Clear();
+                player.betState.Value = null;
             }
-            
+
+            pot.Value = 0;
             stage.Value = RoundStage.Setup;
             currentPlayerSeatId.Value = -1;
-            winningPlayersBySeatId.Clear();
+            WinningPlayersBySeatId.Clear();
             _dealerCards.Clear();
             VisibleTableCards.Clear();
             _deck.Reset();
@@ -416,23 +400,21 @@ namespace AceInTheHole.Tables.Poker.Server
         [ServerRpc(RequireOwnership = false)]
         public void ConfirmPlayInOptionServerRpc(PlayInOption play, ServerRpcParams prams = default)
         {
-            if (CurrentPokerPlayer.OwnerClientId != prams.Receive.SenderClientId) return;
+            if (CurrentPlayer.OwnerClientId != prams.Receive.SenderClientId) return;
 
-            var tsv = potState.Value.Clone();
-            var currentPlayerBet = tsv.GetCurrentBetStateFor(CurrentPokerPlayer) ?? new PlayerBetState { Amount = 0, InRound = true };
+            var currentPlayerBet = CurrentPlayer.betState.Value ?? new PlayerBetState() { Amount = 0, InRound = true };
             if (play == PlayInOption.Fold)
             {
                 currentPlayerBet.InRound = false;
             }
             else
             {
-                var val = (potState.Value.CurrentRequiredBet - currentPlayerBet.Amount);
+                var val = (currentRequiredBet.Value - currentPlayerBet.Amount);
                 currentPlayerBet.Amount += val;
-                CurrentPokerPlayer.balance.Value -= (int) val;
-                tsv.Pot += val;
+                CurrentPlayer.balance.Value -= val;
+                pot.Value += val;
             }
-            tsv.PlayerBetStates[CurrentPokerPlayer.OwnerClientId] = currentPlayerBet;
-            potState.Value = tsv;
+            CurrentPlayer.betState.Value = currentPlayerBet;
 
             TryAdvancePlayer();
         }
@@ -440,24 +422,22 @@ namespace AceInTheHole.Tables.Poker.Server
         [ServerRpc(RequireOwnership = false)]
         public void ConfirmHandOptionServerRpc(BetAction action, ServerRpcParams prams = default)
         {
-            if (CurrentPokerPlayer.OwnerClientId != prams.Receive.SenderClientId) return;
+            if (CurrentPlayer.OwnerClientId != prams.Receive.SenderClientId) return;
 
-            var tsv = potState.Value.Clone();
-            var currentPlayerBet = tsv.PlayerBetStates[CurrentPokerPlayer.OwnerClientId];
+            var currentPlayerBet = CurrentPlayer.betState.Value!.Value;
             switch (action.Type)
             {
                 case BetActionType.Raise:
-                    var newMinimum = tsv.CurrentRequiredBet + action.Amount;
-                    tsv.CurrentRequiredBet = newMinimum;
+                    currentRequiredBet.Value += action.Amount;
                     currentPlayerBet.Amount += action.Amount;
-                    CurrentPokerPlayer.balance.Value = (int)(CurrentPokerPlayer.balance.Value - action.Amount);
-                    tsv.Pot += action.Amount;
+                    CurrentPlayer.balance.Value = (int)(CurrentPlayer.balance.Value - action.Amount);
+                    pot.Value += action.Amount;
                     break;
                 case BetActionType.Check:
-                    var difference = tsv.CurrentRequiredBet - currentPlayerBet.Amount;
+                    var difference = currentRequiredBet.Value - currentPlayerBet.Amount;
                     currentPlayerBet.Amount += difference;
-                    CurrentPokerPlayer.balance.Value = CurrentPokerPlayer.balance.Value - difference;
-                    tsv.Pot += difference;
+                    CurrentPlayer.balance.Value -= difference;
+                    pot.Value += difference;
                     break;
                 case BetActionType.Fold:
                     currentPlayerBet.InRound = false;
@@ -465,8 +445,7 @@ namespace AceInTheHole.Tables.Poker.Server
                 default:
                     throw new ArgumentOutOfRangeException();
             }
-            tsv.PlayerBetStates[CurrentPokerPlayer.OwnerClientId] = currentPlayerBet;
-            potState.Value = tsv;
+            CurrentPlayer.betState.Value = currentPlayerBet;
 
             TryAdvancePlayer();
         }
@@ -474,7 +453,6 @@ namespace AceInTheHole.Tables.Poker.Server
         public override void OnDestroy()
         {
             currentPlayerSeatId.Dispose();
-            potState.Dispose();
             base.OnDestroy();
         }
     }

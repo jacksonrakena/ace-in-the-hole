@@ -1,5 +1,8 @@
+using System;
 using System.ComponentModel;
 using System.Linq;
+using AceInTheHole.Tables.Poker.Server.Betting;
+using Unity.Netcode;
 using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -24,6 +27,10 @@ namespace AceInTheHole.Client.Loading_Screens
     
         void Start()
         {
+            UserNetworkVariableSerialization<PlayerBetState?>.ReadValue = PlayerBetState.ReadNullable;
+            UserNetworkVariableSerialization<PlayerBetState?>.WriteValue = PlayerBetState.WriteNullable;
+            UserNetworkVariableSerialization<PlayerBetState?>.DuplicateValue = PlayerBetState.DuplicateNullable;
+            
             _loadingScreen.rootVisualElement.Q<VisualElement>("Container").style.visibility = Visibility.Hidden;
             DontDestroyOnLoad(gameObject);
 

@@ -72,7 +72,7 @@ namespace AceInTheHole.Tables.Poker.Client.UI
                 _raiseSlider.lowValue = 1;
                 _raiseSlider.highValue = PokerPlayerState.balance.Value;
                 _raiseSlider.value = 0.25f * PokerPlayerState.balance.Value;
-                var requiredRaise = PokerTableState.potState.Value.GetRequiredRaiseFor(PokerPlayerState);
+                var requiredRaise = PokerPlayerState.RequiredIncreaseToCheck;
                 _checkBtn.text = requiredRaise > 0 ? $"Call (${requiredRaise})" : "Check";
                 
             }

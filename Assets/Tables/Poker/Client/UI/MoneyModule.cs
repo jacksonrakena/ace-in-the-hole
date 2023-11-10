@@ -18,7 +18,7 @@ namespace AceInTheHole.Tables.Poker.Client.UI
         
         public void Revalidate()
         {
-            _potStatus.text = $"Pot: {PokerTableState.potState.Value.Pot}";
+            _potStatus.text = $"Pot: {PokerTableState.pot.Value}";
             _balanceStatus.text = $"Balance: {PokerPlayerState.balance.Value}";
         }
     }

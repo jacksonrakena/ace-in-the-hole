@@ -21,5 +21,39 @@ namespace AceInTheHole.Tables.Poker.Server.Betting
                 writer.WriteValueSafe(InRound);
             }
         }
+
+        public override string ToString()
+        {
+            return $"{(InRound ? "Folded" : $"In for ${Amount}")}";
+        }
+        
+        public static void DuplicateNullable(in PlayerBetState? value, ref PlayerBetState? duplicatedValue)
+        {
+            duplicatedValue = value;
+        }
+        
+        public static void ReadNullable(FastBufferReader reader, out PlayerBetState? value) 
+        {
+            reader.ReadValueSafe(out bool hasValue);
+            if (hasValue)
+            {
+                reader.ReadValueSafe(out PlayerBetState v);
+                value = v;
+            }
+            else value = null;
+        }
+        
+        public static void WriteNullable(FastBufferWriter writer, in PlayerBetState? value) 
+        {
+            if (value.HasValue)
+            {
+                writer.WriteValueSafe(true);
+                writer.WriteValueSafe(value.Value);
+            }
+            else
+            {
+                writer.WriteValueSafe(false);
+            }
+        }
     }
 }

@@ -2,6 +2,7 @@ using AceInTheHole.Engine;
 using AceInTheHole.Player;
 using AceInTheHole.Tables.Poker.Client.UI;
 using AceInTheHole.Tables.Poker.Server;
+using AceInTheHole.Tables.Poker.Server.Betting;
 using TMPro;
 using Unity.Netcode;
 using Unity.Netcode.Components;
@@ -17,6 +18,10 @@ namespace AceInTheHole.Tables.Poker.Client
         public NetworkList<Card> Cards;
         public NetworkVariable<int> tablePosition = new NetworkVariable<int>(-1);
         public NetworkVariable<bool> ViewingCards = new NetworkVariable<bool>(false, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
+
+        public NetworkVariable<PlayerBetState?> betState 
+            = new NetworkVariable<PlayerBetState?>
+                (null, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
         
         public GameObject playerUiPrefab;
         GameObject playerUiInstance;
@@ -27,7 +32,7 @@ namespace AceInTheHole.Tables.Poker.Client
         public TextMeshPro roleInfo;
         public GameObject currentPlayerIndicator;
 
-        public bool IsTableHost => _pokerTableState._tableHost.Value == this.tablePosition.Value;
+        public bool IsTableHost => _pokerTableState.tableHost.Value == this.tablePosition.Value;
         
         public void Awake()
         {
@@ -49,9 +54,9 @@ namespace AceInTheHole.Tables.Poker.Client
             else
             {
 
-                if (_pokerTableState.winningPlayersBySeatId.Contains(this.tablePosition.Value))
+                if (_pokerTableState.WinningPlayersBySeatId.Contains(this.tablePosition.Value))
                 {
-                    roleInfo.text = _pokerTableState.winningPlayersBySeatId.Count == 1 ? "Winner" : "Winner (Split pot)";
+                    roleInfo.text = _pokerTableState.WinningPlayersBySeatId.Count == 1 ? "Winner" : "Winner (Split pot)";
                 } else if (this.isBigBlind.Value)
                 {
                     roleInfo.text = "Big blind";
@@ -59,13 +64,17 @@ namespace AceInTheHole.Tables.Poker.Client
                 {
                     roleInfo.text = "Little blind";
                 }
-                else roleInfo.text = "";   
-                
-                if (_pokerTableState.potState.Value.HasFolded(this))
+                else roleInfo.text = "";
+
+                if (betState.Value.HasValue)
                 {
-                    bettingAmount.text = "Folded";
+                    if (!betState.Value.Value.InRound)
+                    {
+                        bettingAmount.text = "Folded";
+                    }
+                    else bettingAmount.text = "$" + betState.Value.Value.Amount;
                 }
-                else bettingAmount.text = "$" + _pokerTableState.potState.Value.GetCurrentBetAmountFor(this);
+                else bettingAmount.text = "";
             }
             
             //currentPlayerIndicator.SetActive(_pokerTableState.currentPlayerSeatId.Value == tablePosition.Value);
@@ -92,17 +101,17 @@ namespace AceInTheHole.Tables.Poker.Client
             if (_pokerTableState.stage.Value == RoundStage.End)
             {
                 var animator = GetComponentInParent<NetworkAnimator>();
-                if (_pokerTableState.winningPlayersBySeatId.Contains(this.tablePosition.Value))
+                if (_pokerTableState.WinningPlayersBySeatId.Contains(this.tablePosition.Value))
                 {
                     animator.SetTrigger("Won round trigger");
-                } else if (_pokerTableState.winningPlayersBySeatId.Count > 0)
+                } else if (_pokerTableState.WinningPlayersBySeatId.Count > 0)
                 {
                     animator.SetTrigger("Lost round trigger");
                 }
             }
         }
 
-        public void OnPotStateChanged(PotState old, PotState current) => Revalidate();
+        public void OnPotStateChanged(PlayerBetState? old, PlayerBetState? current) => Revalidate();
         public void OnCurrentPlayerChanged(int oldSeat, int newSeat) => Revalidate();
         public void OnWinningPlayersChanged(NetworkListEvent<int> changeData) => Revalidate();
         public void OnBlindsChange(bool oldValue, bool newValue) => Revalidate();
@@ -120,9 +129,9 @@ namespace AceInTheHole.Tables.Poker.Client
         {
             _pokerTableState = gameObject.GetComponentInParent<PokerTableState>();
             
-            _pokerTableState.potState.OnValueChanged += OnPotStateChanged;
+            betState.OnValueChanged += OnPotStateChanged;
             _pokerTableState.currentPlayerSeatId.OnValueChanged += OnCurrentPlayerChanged;
-            _pokerTableState.winningPlayersBySeatId.OnListChanged += OnWinningPlayersChanged;
+            _pokerTableState.WinningPlayersBySeatId.OnListChanged += OnWinningPlayersChanged;
             isBigBlind.OnValueChanged += OnBlindsChange;
             isLittleBlind.OnValueChanged += OnBlindsChange;
             
@@ -147,9 +156,9 @@ namespace AceInTheHole.Tables.Poker.Client
         {
             if (IsClient)
             {
-                _pokerTableState.potState.OnValueChanged -= OnPotStateChanged;
+                betState.OnValueChanged -= OnPotStateChanged;
                 _pokerTableState.currentPlayerSeatId.OnValueChanged -= OnCurrentPlayerChanged;
-                _pokerTableState.winningPlayersBySeatId.OnListChanged -= OnWinningPlayersChanged;
+                _pokerTableState.WinningPlayersBySeatId.OnListChanged -= OnWinningPlayersChanged;
                 isBigBlind.OnValueChanged -= OnBlindsChange;
                 isLittleBlind.OnValueChanged -= OnBlindsChange;
             }
@@ -164,5 +173,11 @@ namespace AceInTheHole.Tables.Poker.Client
             if (_pokerTableState == null) return $"Client {OwnerClientId}";
             return $"State for {OwnerClientId} (seat {tablePosition.Value}), sitting at {_pokerTableState.gameObject.name}";
         }
+
+        public int CurrentBetAmount => betState.Value?.Amount ?? 0;
+        
+        public int RequiredIncreaseToCheck => _pokerTableState.currentRequiredBet.Value - CurrentBetAmount;
+
+        public bool HasFolded => !betState.Value?.InRound ?? false;
     }
 }

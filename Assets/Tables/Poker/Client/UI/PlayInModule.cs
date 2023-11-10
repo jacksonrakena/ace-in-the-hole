@@ -32,7 +32,7 @@ namespace AceInTheHole.Tables.Poker.Client.UI
         {
             if (PokerTableState.currentPlayerSeatId.Value == PokerPlayerState.tablePosition.Value && PokerTableState.stage.Value == RoundStage.PlayIn)
             {
-                _playHandBtn.text = $"Play hand (${PokerTableState.potState.Value.CurrentRequiredBet - PokerTableState.potState.Value.GetCurrentBetAmountFor(PokerPlayerState)})";
+                _playHandBtn.text = $"Play hand (${PokerPlayerState.RequiredIncreaseToCheck})";
                 IUserInterfaceModule.Show(_playUi);
             }
             else IUserInterfaceModule.Hide(_playUi);
