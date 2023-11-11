@@ -1,5 +1,6 @@
 using AceInTheHole.Network;
 using UnityEngine;
+using UnityEngine.Rendering;
 using UnityEngine.UIElements;
 namespace AceInTheHole.Scenes.MainMenu
 {
@@ -41,6 +42,11 @@ namespace AceInTheHole.Scenes.MainMenu
             {
                 _relayManager.ConnectToLocal();
             });
+
+            if (SystemInfo.graphicsDeviceType == GraphicsDeviceType.Null)
+            {
+                _relayManager.StartServer();
+            }
         }
     }
 }
