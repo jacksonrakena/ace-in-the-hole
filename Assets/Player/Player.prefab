@@ -235,6 +235,13 @@ MonoBehaviour:
     GateFit: 2
     FocusDistance: 10
     m_SensorSize: {x: 1, y: 1}
+    Iso: 200
+    ShutterSpeed: 0.005
+    Aperture: 16
+    BladeCount: 5
+    Curvature: {x: 2, y: 11}
+    BarrelClipping: 0.25
+    Anamorphism: 0
   m_Transitions:
     m_BlendHint: 0
     m_InheritPosition: 0
@@ -479,7 +486,7 @@ MonoBehaviour:
   FallTimeout: 0.15
   Grounded: 1
   GroundedOffset: -0.14
-  GroundedRadius: 0.14
+  GroundedRadius: 0.2
   GroundLayers:
     serializedVersion: 2
     m_Bits: 64
@@ -558,7 +565,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e8d0727d5ae3244e3b569694d3912374, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  TransitionStateInfoList: []
+  TransitionStateInfoList:
+  - IsCrossFadeExit: 0
+    Layer: 1
+    OriginatingState: 494912236
+    DestinationState: 1777976441
+    TransitionDuration: 0.25
+    TriggerNameHash: -920441707
+    TransitionIndex: 0
+  - IsCrossFadeExit: 0
+    Layer: 1
+    OriginatingState: 494912236
+    DestinationState: -1788089750
+    TransitionDuration: 0.25
+    TriggerNameHash: 2083123225
+    TransitionIndex: 1
   m_Animator: {fileID: 6680488959426852030}
 --- !u!114 &8136679623232398107
 MonoBehaviour:
