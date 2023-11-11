@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using AceInTheHole.Engine;
+using AceInTheHole.Tables.Base;
 using AceInTheHole.Tables.Poker.Client;
 using AceInTheHole.Tables.Poker.Server.Betting;
 using AceInTheHole.Tables.Poker.Server.PlayIn;
@@ -13,26 +14,19 @@ using UnityEngine;
 using UnityEngine.Serialization;
 namespace AceInTheHole.Tables.Poker.Server
 {
-    public class PokerTableState : NetworkBehaviour
+    public class PokerTableState : OrdinalTableBase<PokerPlayerState, PokerTableState>
     {
-        [Tooltip("The GameObject on the table model containing all of the seat objects as children.")]
-        public GameObject SeatContainer;
-        
-        /*
-         * The host (dealer) of the table.
-         * At the moment, this variable only changes when the table host disconnects.
-         */
-        public NetworkVariable<int> tableHost = new NetworkVariable<int>(-1);
-
-        /*
-         * The number of players at this table.
-         */
-        public NetworkVariable<int> playerCount = new NetworkVariable<int>(0);
-        
         readonly Deck _deck = new Deck();
         readonly List<Card> _dealerCards = new List<Card>();
-        readonly Dictionary<int, PokerPlayerState> _playersBySeatPosition = new Dictionary<int, PokerPlayerState>();
 
+        public override PlayableTableInfo TableInfo => new PlayableTableInfo
+        {
+            Name = "Texas Hold 'Em",
+            Description = "Your favourite poker game.",
+            MaximumPlayers = 8,
+            MinimumPlayers = 2
+        };
+        
         public override void OnNetworkSpawn()
         {
             if (IsServer)
@@ -57,12 +51,6 @@ namespace AceInTheHole.Tables.Poker.Server
          * The state of the game.
          */
         public NetworkVariable<RoundStage> stage = new NetworkVariable<RoundStage>();
-
-        /*
-         * The seat position of the current player. (-1 if no player is playing)
-         */
-        public NetworkVariable<int> currentPlayerSeatId = new NetworkVariable<int>(-1);
-
         /*
          * The seat position of the winning player. (-1 if no player is playing)
          */
@@ -121,94 +109,17 @@ namespace AceInTheHole.Tables.Poker.Server
             VisibleTableCards = new();
             WinningPlayersBySeatId = new();
         }
-
-        [CanBeNull] public PokerPlayerState CurrentPlayer => currentPlayerSeatId.Value == -1 ? null : _playersBySeatPosition[currentPlayerSeatId.Value];
-
-        public IEnumerable<PokerPlayerState> AllPlayersAtTable => _playersBySeatPosition.Values.NotNull();
-
         public IEnumerable<PokerPlayerState> AllPlayersRemainingInHand =>
             _playersBySeatPosition
                 .Values
                 .Where(e => e != null
                             && e.betState.Value is { InRound: true });
-        
-        
-        public GameObject PlayerStatePrefab;
-
-        public void JoinTable(ulong clientId)
+        public override void OnClientJoinTable(PokerPlayerState player)
         {
-            if (AllPlayersAtTable.Any(e => e.OwnerClientId == clientId))
-            {
-                return;
-            }
             
-            // Create the state object for the player being at this specific table
-            var playerStateObject = Instantiate(PlayerStatePrefab, 
-                NetworkManager.Singleton.ConnectedClients[clientId].PlayerObject.transform);
-            
-            // Spawn the state object over the network and pass ownership to the player
-            var playerStateNetworking = playerStateObject.GetComponent<NetworkObject>();
-            playerStateNetworking.SpawnWithOwnership(clientId);
-            
-            // Parent the state object under the player
-            playerStateNetworking.TrySetParent(NetworkManager.Singleton.ConnectedClients[clientId].PlayerObject.transform, worldPositionStays:false);
-
-            var pokerPlayer = playerStateObject.GetComponent<PokerPlayerState>();
-            
-            if (_playersBySeatPosition.Any(e => e.Value == null))
-            {
-                var position = _playersBySeatPosition.First(e => e.Value == null).Key;
-                _playersBySeatPosition[position] = pokerPlayer;
-                pokerPlayer.tablePosition.Value = position;
-                Log($"{pokerPlayer} joined table, assigned seat position {position}");
-                if (tableHost.Value == -1)
-                {
-                    AssignHost(pokerPlayer, position);
-                }
-                var targetSeat = SeatContainer.transform.Find("Seat" + position);
-                if (!pokerPlayer.transform.parent.GetComponent<NetworkObject>().TrySetParent(targetSeat.transform))
-                {
-                    Debug.Log($"Failed to move {pokerPlayer} to seat {targetSeat}");
-                }
-                playerCount.Value++;
-                pokerPlayer.ServerConnectToTable(this);
-            }
-            else
-            {
-                Log($"Player {pokerPlayer} can't join the table as there are no position available.");
-            }
         }
-        public void Log(string message)
+        public override void OnClientLeaveTable(PokerPlayerState pokerPlayer)
         {
-            Debug.Log($"{gameObject.name}: {message}");
-        }
-        public void AssignHost(PokerPlayerState pokerPlayer, int position)
-        {
-            tableHost.Value = position;
-            Log($"{pokerPlayer} assigned as table host");
-        }
-        public void LeaveTable(PokerPlayerState pokerPlayer)
-        {
-            Log($"{pokerPlayer} left table {gameObject.name}");
-            
-            playerCount.Value--;
-            _playersBySeatPosition[pokerPlayer.tablePosition.Value] = null;
-            
-            if (tableHost.Value == pokerPlayer.tablePosition.Value)
-            {
-                var otherPlayers = _playersBySeatPosition
-                    .Where(d => d.Value != null).ToList();
-                if (otherPlayers.Any())
-                {
-                    AssignHost(otherPlayers.First().Value, otherPlayers.First().Key);
-                }
-            }
-            
-            if (pokerPlayer.betState.Value != null)
-            {
-                pokerPlayer.betState.Value = null;
-            }
-
             if (currentPlayerSeatId.Value == pokerPlayer.tablePosition.Value)
             {
                 TryAdvancePlayer();

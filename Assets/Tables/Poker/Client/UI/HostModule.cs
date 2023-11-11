@@ -17,7 +17,7 @@ namespace AceInTheHole.Tables.Poker.Client.UI
             _leaveTableBtn = document.rootVisualElement.Q<Button>("leave-table-btn");
             _leaveTableBtn.RegisterCallback<ClickEvent>(s =>
             {
-                PokerPlayerState.Client_LeaveTable();
+                PokerPlayerState.Client_RequestLeaveTable();
             });
             _hostPanel = document.rootVisualElement.Q<VisualElement>("host-panel");
             _startGameButton = _hostPanel.Q<Button>("start-game");
