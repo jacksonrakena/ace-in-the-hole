@@ -140,13 +140,7 @@ namespace AceInTheHole.Tables.Poker.Client
                 isLittleBlind.OnValueChanged -= OnBlindsChange;
             }
         }
-
-        public override string ToString()
-        {
-            if (TableState == null) return $"Client {OwnerClientId}";
-            return $"State for {OwnerClientId} (seat {tablePosition.Value}), sitting at {TableState.gameObject.name}";
-        }
-
+        
         public int CurrentBetAmount => betState.Value?.Amount ?? 0;
         
         public int RequiredIncreaseToCheck => TableState.currentRequiredBet.Value - CurrentBetAmount;

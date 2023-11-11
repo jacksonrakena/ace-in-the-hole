@@ -58,5 +58,11 @@ namespace AceInTheHole.Tables.Base
             NetworkObject.Despawn();
             OnLeaveTable();
         }
+
+        public override string ToString()
+        {
+            if (TableState == null) return $"Client {OwnerClientId}";
+            return $"Client {OwnerClientId} at seat {tablePosition.Value} on {TableState.name}";
+        }
     }
 }
