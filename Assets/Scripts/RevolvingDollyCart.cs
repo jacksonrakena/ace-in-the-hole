@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using Cinemachine;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace AceInTheHole
 {
@@ -11,12 +12,12 @@ namespace AceInTheHole
         CinemachineTrackedDolly dolly;
         public List<CinemachinePathBase> paths = new List<CinemachinePathBase>();
         CinemachineDollyCart cart;
-        public CinemachineVirtualCamera camera;
+        public CinemachineVirtualCamera targetCamera;
         int currentPath = 0;
         // Start is called before the first frame update
         void Start()
         {
-            dolly = camera.GetCinemachineComponent<CinemachineTrackedDolly>();
+            dolly = targetCamera.GetCinemachineComponent<CinemachineTrackedDolly>();
             dolly.m_Path = paths[currentPath];
             cart = GetComponent<CinemachineDollyCart>();
         }

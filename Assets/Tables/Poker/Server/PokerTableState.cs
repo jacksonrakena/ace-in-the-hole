@@ -27,20 +27,6 @@ namespace AceInTheHole.Tables.Poker.Server
             MinimumPlayers = 2
         };
         
-        public override void OnNetworkSpawn()
-        {
-            if (IsServer)
-            {
-                _playersBySeatPosition.Clear();
-                var i = 0;
-                foreach (Transform child in SeatContainer.transform)
-                {
-                    _playersBySeatPosition[i] = null;
-                    i++;
-                }
-            }
-        }
-        
         
         /*
          * The cards that players can see on the table.

@@ -24,7 +24,7 @@ namespace AceInTheHole.Tables.Base
         /*
          * The number of players at this table.
          */
-        public NetworkVariable<int> playerCount = new NetworkVariable<int>(0);
+        public NetworkVariable<int> PlayerCount { get; } = new NetworkVariable<int>(0);
         
         /*
          * The seat position of the current player. (-1 if no player is playing)
@@ -68,7 +68,6 @@ namespace AceInTheHole.Tables.Base
 
         public GameObject PlayerStatePrefab;
         
-        [CanBeNull]
         public void JoinClientToTable(ulong clientId)
         {
             if (AllPlayersAtTable.Any(e => e.OwnerClientId == clientId))
@@ -104,7 +103,7 @@ namespace AceInTheHole.Tables.Base
                 {
                     Debug.Log($"Failed to move {pokerPlayer} to seat {targetSeat}");
                 }
-                playerCount.Value++;
+                PlayerCount.Value++;
                 OnClientJoinTable(pokerPlayer);
                 pokerPlayer.Server_Initialize((TTableBase) this);
                 return;
@@ -121,7 +120,7 @@ namespace AceInTheHole.Tables.Base
         {
             Log($"{player} left");
             
-            playerCount.Value--;
+            PlayerCount.Value--;
             _playersBySeatPosition[player.tablePosition.Value] = null;
             
             if (tableHost.Value == player.tablePosition.Value)

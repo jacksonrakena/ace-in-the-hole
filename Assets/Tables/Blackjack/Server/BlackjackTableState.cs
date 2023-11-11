@@ -1,5 +1,8 @@
-﻿using AceInTheHole.Tables.Base;
+﻿using System.Collections.Generic;
+using AceInTheHole.Engine;
+using AceInTheHole.Tables.Base;
 using AceInTheHole.Tables.Blackjack.Client;
+using Unity.Netcode;
 
 namespace AceInTheHole.Tables.Blackjack.Server
 {
@@ -12,7 +15,11 @@ namespace AceInTheHole.Tables.Blackjack.Server
             MaximumPlayers = 8,
             MinimumPlayers = 1
         };
-        
+
+        readonly Deck deck = new Deck();
+        readonly List<Card> dealerCards = new List<Card>();
+
+
         public override void OnClientJoinTable(BlackjackPlayerState player)
         {
             

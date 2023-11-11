@@ -43,7 +43,7 @@ namespace AceInTheHole.Tables.Poker.Client.UI
                 pokerTableState.VisibleTableCards.OnListChanged += _ => Revalidate();
                 pokerTableState.currentPlayerSeatId.OnValueChanged += (_, _) => Revalidate();
                 pokerTableState.stage.OnValueChanged += (_, _) => Revalidate();
-                pokerTableState.playerCount.OnValueChanged += (_, _) => Revalidate();
+                pokerTableState.PlayerCount.OnValueChanged += (_, _) => Revalidate();
                 pokerTableState.tableHost.OnValueChanged += (_, _) => Revalidate();
                 pokerTableState.pot.OnValueChanged += (_, _) => Revalidate();
             

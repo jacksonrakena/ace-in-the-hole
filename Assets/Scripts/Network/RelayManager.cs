@@ -26,7 +26,7 @@ namespace AceInTheHole.Network
                 {
                     loadingScreen.StopLoadingScreen();
                 };
-                var status = NetworkManager.Singleton.SceneManager.LoadScene("Terrain", LoadSceneMode.Single);
+                var status = NetworkManager.Singleton.SceneManager.LoadScene("Game", LoadSceneMode.Single);
             }
         }
     }

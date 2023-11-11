@@ -3,11 +3,13 @@ using Unity.Netcode;
 using UnityEngine;
 namespace AceInTheHole.Tables.Base
 {
-    public abstract class OrdinalTablePlayerStateBase<TPlayerState, TTableBase> : NetworkBehaviour 
+    public abstract class OrdinalTablePlayerStateBase<TPlayerState, TTableBase> : NetworkBehaviour, IPlayableTablePlayerState
         where TPlayerState : OrdinalTablePlayerStateBase<TPlayerState, TTableBase>
         where TTableBase : OrdinalTableBase<TPlayerState, TTableBase>
     {
         public NetworkVariable<int> tablePosition = new NetworkVariable<int>(-1);
+
+        public IPlayableTable PlayableTable => TableState;
 
         protected TTableBase TableState;
         public bool IsTableHost => TableState.tableHost.Value == this.tablePosition.Value;
