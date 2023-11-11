@@ -107,8 +107,11 @@ namespace AceInTheHole.Tables.Poker.Client
                 var player = gameObject.transform.parent;
                 if (IsOwner)
                 {
-                    playerUiInstance = Instantiate(playerUiPrefab, new Vector3(0, 0, 0), Quaternion.identity);
-                    playerUiInstance.GetComponent<PlayerUI>().Configure(this, TableState);
+                    if (playerUiInstance == null)
+                    {
+                        playerUiInstance = Instantiate(playerUiPrefab, new Vector3(0, 0, 0), Quaternion.identity);
+                        playerUiInstance.GetComponent<PlayerUI>().Configure(this, TableState);   
+                    }
                 }
                 roleInfo = player.transform.Find("Role").GetComponent<TextMeshPro>();
                 bettingAmount = player.transform.Find("BettingAmount").GetComponent<TextMeshPro>();
@@ -124,13 +127,12 @@ namespace AceInTheHole.Tables.Poker.Client
             }
             if (IsOwner)
             {
-                Destroy(playerUiInstance);
-                /*
-                 *             if (pokerPlayer.betState.Value != null)
-            {
-                pokerPlayer.betState.Value = null;
-            }
-                 */
+                if (IsClient)
+                {
+                    playerUiInstance.GetComponent<PlayerUI>().enabled = false;
+                    playerUiInstance.GetComponent<PlayerUI>().destroyed = true;
+                    Destroy(playerUiInstance);
+                }
                 betState.OnValueChanged -= OnPotStateChanged;
                 TableState.currentPlayerSeatId.OnValueChanged -= OnCurrentPlayerChanged;
                 TableState.WinningPlayersBySeatId.OnListChanged -= OnWinningPlayersChanged;
