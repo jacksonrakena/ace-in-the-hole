@@ -19,11 +19,11 @@ Ace In The Hole is a very early in-development multiplayer Unity game that allow
 # Games
 ## Poker (Texas Hold 'Em Style)
 Fully working, with the exception of pot splitting
-![Alt text](readme/poker.png)
+![Alt text](https://i.imgur.com/3eIiBqO.png)
 
 ## Blackjack (Dealer Draw 16, Stand 17, 2:1)
 Not fully modelled yet.
-![Alt text](readme/blackjack.png)
+![Alt text](https://i.imgur.com/svtxj8w.png)
 
 
 #### Copyright
