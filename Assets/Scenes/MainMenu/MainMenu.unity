@@ -1985,7 +1985,7 @@ GameObject:
   - component: {fileID: 2050988136}
   - component: {fileID: 2050988137}
   - component: {fileID: 2050988138}
-  - component: {fileID: 2050988139}
+  - component: {fileID: 2050988140}
   m_Layer: 0
   m_Name: Networking
   m_TagString: Untagged
@@ -2044,7 +2044,7 @@ MonoBehaviour:
     EnableNetworkLogs: 1
     OldPrefabList: []
   RunInBackground: 1
-  LogLevel: 1
+  LogLevel: 0
 --- !u!114 &2050988138
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2072,7 +2072,7 @@ MonoBehaviour:
     PacketDelayMS: 0
     PacketJitterMS: 0
     PacketDropRate: 0
---- !u!114 &2050988139
+--- !u!114 &2050988140
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -2081,11 +2081,19 @@ MonoBehaviour:
   m_GameObject: {fileID: 2050988135}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e27352077b44cbd40a56cbb2852e047a, type: 3}
+  m_Script: {fileID: 11500000, guid: a9caa66232f129640bf73515d81ee7a7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  DrawOffset: {x: 10, y: 10}
-  LabelColor: {r: 0, g: 0, b: 0, a: 1}
+  Port: 4098
+  Address: 127.0.0.1
+  PingInterval: 1
+  DisconnectTimeout: 5
+  ReconnectDelay: 0.5
+  MaxConnectAttempts: 10
+  MessageBufferSize: 5120
+  SimulatePacketLossChance: 0
+  SimulateMinLatency: 0
+  SimulateMaxLatency: 0
 --- !u!1001 &2069707679
 PrefabInstance:
   m_ObjectHideFlags: 0
