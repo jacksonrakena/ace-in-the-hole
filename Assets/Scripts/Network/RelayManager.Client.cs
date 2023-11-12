@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Threading.Tasks;
 using AceInTheHole.Client.Loading_Screens;
-using AceInTheHole.Network.Promul;
 using Unity.Netcode;
 using Unity.Netcode.Transports.UTP;
 using UnityEngine;
@@ -29,7 +28,7 @@ namespace AceInTheHole.Network
             //         allocation.ConnectionData, allocation.HostConnectionData);
             // }
             // catch (Exception e) { Debug.LogException(e); }
-            var transport = NetworkManager.Singleton.GetComponent<PromulTransport>();
+            var transport = NetworkManager.Singleton.GetComponent<Promul.Transport.PromulTransport>();
             NetworkManager.Singleton.NetworkConfig.NetworkTransport = transport;
             StartClient();
         }
