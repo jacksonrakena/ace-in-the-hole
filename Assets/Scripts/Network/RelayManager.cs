@@ -12,6 +12,8 @@ namespace AceInTheHole.Network
     {
         public LoadingScreen loadingScreen;
 
+        public bool UseUnityRelay => false;
+        
         public async Task InitialiseUnityServicesAsync()
         {
             await UnityServices.InitializeAsync();

@@ -4,32 +4,40 @@ using AceInTheHole.Client.Loading_Screens;
 using Unity.Netcode;
 using Unity.Netcode.Transports.UTP;
 using UnityEngine;
+using Promul.Runtime;
 namespace AceInTheHole.Network
 {
     public partial class RelayManager
     {
         public async Task ConnectToRelayAsync(string relayJoinCode)
         {
-            // var ls = GameObject.Find("Loading Screen").GetComponent<LoadingScreen>();
-            // ls.StartLoadingScreen();
-            // try
-            // {
-            //     ls.SetState(LoadingState.InitializeNet);
-            //     await InitialiseUnityServicesAsync();
-            //     ls.SetState(LoadingState.WaitForCode);
-            //     var allocation = await Unity.Services.Relay.RelayService.Instance.JoinAllocationAsync(relayJoinCode);
-            //
-            //     ls.SetState(LoadingState.WaitForSync);
-            //     var transport = NetworkManager.Singleton.GetComponent<UnityTransport>();
-            //     transport.SetRelayServerData(allocation.RelayServer.IpV4,
-            //         (ushort)allocation.RelayServer.Port,
-            //         allocation.AllocationIdBytes,
-            //         allocation.Key,
-            //         allocation.ConnectionData, allocation.HostConnectionData);
-            // }
-            // catch (Exception e) { Debug.LogException(e); }
-            var transport = NetworkManager.Singleton.GetComponent<Promul.Transport.PromulTransport>();
-            NetworkManager.Singleton.NetworkConfig.NetworkTransport = transport;
+            var ls = GameObject.Find("Loading Screen").GetComponent<LoadingScreen>();
+            ls.StartLoadingScreen();
+            
+            ls.SetState(LoadingState.InitializeNet);
+            if (UseUnityRelay)
+            {
+                try
+                {
+                    await InitialiseUnityServicesAsync();
+                    ls.SetState(LoadingState.WaitForCode);
+                    var allocation = await Unity.Services.Relay.RelayService.Instance.JoinAllocationAsync(relayJoinCode);
+            
+                    ls.SetState(LoadingState.WaitForSync);
+                    var transport = NetworkManager.Singleton.GetComponent<UnityTransport>();
+                    transport.SetRelayServerData(allocation.RelayServer.IpV4,
+                        (ushort)allocation.RelayServer.Port,
+                        allocation.AllocationIdBytes,
+                        allocation.Key,
+                        allocation.ConnectionData, allocation.HostConnectionData);
+                }
+                catch (Exception e) { Debug.LogException(e); }
+            }
+            else
+            {
+                var transport = NetworkManager.Singleton.GetComponent<PromulTransport>();
+                NetworkManager.Singleton.NetworkConfig.NetworkTransport = transport;  
+            }
             StartClient();
         }
         
