@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Internationalization/Text.h"
+#include "Net/UnrealNetwork.h"
 #include "PokerEngine.generated.h"
 
 /**
@@ -61,62 +62,29 @@ public:
 	}
 };
 
-UCLASS(BlueprintType)
-class AITH_UNREAL_API UCard : public UObject {
-	GENERATED_BODY()
+USTRUCT(BlueprintType)
+struct AITH_UNREAL_API FUCard {
+	GENERATED_BODY();
 
 public:
-	UPROPERTY(Category = "State", EditAnywhere)
+	UPROPERTY(Category = "State", EditAnywhere, BlueprintReadOnly)
 	ENumber Number = ENumber::Ace;
-	UPROPERTY(Category = "State", EditAnywhere)
+	UPROPERTY(Category = "State", EditAnywhere, BlueprintReadOnly)
 	ESuit Suit = ESuit::Clubs;
 
-	UCard(const ENumber number, const ESuit suit) : Number(number), Suit(suit) {}
-	UCard(){}
+	FUCard(){}
 
-	bool operator >(const UCard Right) const
+	bool operator >(const FUCard Right) const
 	{
 		return Number > Right.Number;
 	}
-	bool operator ==(const UCard Right) const
+	bool operator ==(const FUCard Right) const
 	{
 		return Suit == Right.Suit && Number == Right.Number;
 	}
-
-	UFUNCTION(BlueprintPure, Category="Bank")
-	FORCEINLINE FString ToText() const
-	{
-		FStringFormatOrderedArguments Args;
-		Args.Add(FNumberUtil::GetName(Suit));
-		Args.Add(FNumberUtil::GetNumber(Number));
-		return FString::Format(TEXT("{0}{1}"), Args);
-	}
 };
 
-inline uint32 GetTypeHash(const UCard& Card)
+inline uint32 GetTypeHash(const FUCard& Card)
 {
-	return FCrc::MemCrc32(&Card, sizeof(UCard));
+	return FCrc::MemCrc32(&Card, sizeof(FUCard));
 }
-
-UCLASS(BlueprintType)
-class AITH_UNREAL_API UCardDeck : public UObject {
-	GENERATED_BODY()
-public:
-	UPROPERTY(Category = "State", EditAnywhere, BlueprintReadWrite)
-	TSet<UCard*> Cards;
-	UCardDeck()
-	{
-		auto Card = NewObject<UCard>();
-		Card->Number = static_cast<ENumber>(FMath::RandRange(0, 12));
-		Card->Suit = static_cast<ESuit>(FMath::RandRange(0, 3));
-		Cards.Emplace(Card);
-
-		auto Card2 = NewObject<UCard>();
-		Card2->Number = static_cast<ENumber>(FMath::RandRange(0, 12));
-		Card2->Suit = static_cast<ESuit>(FMath::RandRange(0, 3));
-		Cards.Emplace(Card2);
-	}
-	
-	UFUNCTION(BlueprintPure, Category="Bank")
-	FORCEINLINE TSet<UCard*> GetCards() const { return Cards; }
-};
