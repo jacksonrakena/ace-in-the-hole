@@ -50,3 +50,6 @@ Session.vim
 # Visual Studio
 .vs
 .idea
+Plugins/Developer/RiderLink/Binaries/
+
+Plugins/Developer/RiderLink/Intermediate/
