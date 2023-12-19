@@ -1,5 +1,4 @@
 # Ace In The Hole
-# Ace In The Hole
 
 Ace In The Hole is a very early in-development multiplayer Unreal Engine game that allows players to play a variety of poker table games against other players over their local network, Epic Online Services, or (in the future) the Steamworks Relay.
 
