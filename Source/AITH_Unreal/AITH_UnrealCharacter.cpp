@@ -83,8 +83,6 @@ void AAITH_UnrealCharacter::OnBalanceUpdate()
 {
 	if (IsLocallyControlled())
 	{
-		FString balanceMessage = FString::Printf(TEXT("Balance: %f"), Balance);
-		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, balanceMessage);
 	}
 }
 
@@ -120,9 +118,11 @@ void AAITH_UnrealCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInp
 		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &AAITH_UnrealCharacter::Move);
 		auto cont = static_cast<APlayerController*>(this->GetController());
 		FInputModeGameAndUI gui;
+		gui.SetHideCursorDuringCapture(false);
 		cont->SetInputMode(gui);
+		cont->SetShowMouseCursor(true);
 		// Looking
-		//EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &AAITH_UnrealCharacter::Look);
+		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &AAITH_UnrealCharacter::Look);
 	}
 	else
 	{
