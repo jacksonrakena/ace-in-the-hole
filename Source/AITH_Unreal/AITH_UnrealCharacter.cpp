@@ -83,6 +83,8 @@ void AAITH_UnrealCharacter::OnBalanceUpdate()
 {
 	if (IsLocallyControlled())
 	{
+		// FString balanceMessage = FString::Printf(TEXT("Balance change: %f"), Balance);
+		// GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, balanceMessage);
 	}
 }
 
@@ -99,6 +101,12 @@ void AAITH_UnrealCharacter::BeginPlay()
 		{
 			Subsystem->AddMappingContext(DefaultMappingContext, 0);
 		}
+	}
+
+	if (GetLocalRole() == ROLE_Authority)
+	{
+		// auto state = GetWorld()->GetGameState<PokerTableState>();
+		// this->Cards.Emplace(GetState)
 	}
 }
 

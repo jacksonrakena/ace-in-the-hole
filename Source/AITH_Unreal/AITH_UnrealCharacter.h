@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "Logging/LogMacros.h"
+#include "Public/PokerEngine.h"
 #include "AITH_UnrealCharacter.generated.h"
 
 class USpringArmComponent;
@@ -53,6 +54,9 @@ public:
 	
 	UFUNCTION(BlueprintCallable, Category="Bank")
 	void SetBalance(float newBalance);
+
+	//UFUNCTION(BlueprintPure, Category="Cards")
+	//FORCEINLINE TSet<UCard*> GetCards() const { return Cards; }
 	
 protected:
 
