@@ -10,6 +10,7 @@
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "InputActionValue.h"
+#include "PokerTableState.h"
 #include "Net/UnrealNetwork.h"
 
 DEFINE_LOG_CATEGORY(LogTemplateCharacter);
@@ -105,8 +106,7 @@ void AAITH_UnrealCharacter::BeginPlay()
 
 	if (GetLocalRole() == ROLE_Authority)
 	{
-		// auto state = GetWorld()->GetGameState<PokerTableState>();
-		// this->Cards.Emplace(GetState)
+		auto state = GetWorld()->GetGameState<APokerTableState>();
 	}
 }
 

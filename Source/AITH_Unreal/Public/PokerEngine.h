@@ -88,3 +88,34 @@ inline uint32 GetTypeHash(const FUCard& Card)
 {
 	return FCrc::MemCrc32(&Card, sizeof(FUCard));
 }
+
+USTRUCT(BlueprintType)
+struct AITH_UNREAL_API FCoinValueTable {
+	GENERATED_BODY();
+	float Value1;
+	float Value2;
+	float Value3;
+	float Value4;
+	float Value5;
+	FCoinValueTable():Value1(0.1),Value2(0.2),Value3(0.5),Value4(1),Value5(2){}
+	FCoinValueTable(const float V1, const float V2, const float V3, const float V4, const float V5): Value1(V1),Value2(V2),Value3(V3),Value4(V4),Value5(V5){}
+};
+
+inline FCoinValueTable DefaultValueTable()
+{
+	return FCoinValueTable();
+}
+USTRUCT(BlueprintType)
+struct AITH_UNREAL_API FCoinAmount {
+	GENERATED_BODY();
+	int32_t Amount1;
+	int32_t Amount2;
+	int32_t Amount3;
+	int32_t Amount4;
+	int32_t Amount5;
+
+	static int32_t CalculateTotalAmount(const FCoinAmount& Amount, const FCoinValueTable& ValueTable)
+	{
+		return (Amount.Amount1*ValueTable.Value1)+(Amount.Amount2*ValueTable.Value2)+(Amount.Amount3*ValueTable.Value3)+(Amount.Amount4*ValueTable.Value4)+(Amount.Amount5*ValueTable.Value5);
+	}
+};

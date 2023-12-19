@@ -10,16 +10,17 @@ void APokerTableState::BeginPlay()
 	Super::BeginPlay();
 	if (GetLocalRole() == ROLE_Authority)
 	{
-		FUCard Card;
-		Card.Number = static_cast<ENumber>(FMath::RandRange(0, 12));
-		Card.Suit = static_cast<ESuit>(FMath::RandRange(0, 3));
-		Cards.Emplace(Card);
-
-		FUCard Card2;
-		Card2.Number = static_cast<ENumber>(FMath::RandRange(0, 12));
-		Card2.Suit = static_cast<ESuit>(FMath::RandRange(0, 3));
-		Cards.Emplace(Card2);
+		Cards.Emplace(Draw());
+		Cards.Emplace(Draw());
+		Cards.Emplace(Draw());
 	}
+}
+FUCard APokerTableState::Draw()
+{
+	FUCard Card3;
+	Card3.Number = static_cast<ENumber>(FMath::RandRange(0, 12));
+	Card3.Suit = static_cast<ESuit>(FMath::RandRange(0, 3));
+	return Card3;
 }
 void APokerTableState::OnRep_Deck(){}
 void APokerTableState::GetLifetimeReplicatedProps(TArray <FLifetimeProperty>& OutLifetimeProps) const

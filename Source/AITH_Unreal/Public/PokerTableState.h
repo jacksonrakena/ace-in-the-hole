@@ -5,6 +5,8 @@
 #include "CoreMinimal.h"
 #include "PokerEngine.h"
 #include "GameFramework/GameStateBase.h"
+#include "Brushes/SlateImageBrush.h"
+#include "Templates/SharedPointer.h"
 #include "PokerTableState.generated.h"
 
 /** Please add a class description */
@@ -30,11 +32,23 @@ public:
 	virtual void BeginPlay() override;
 
 	UFUNCTION(BlueprintCallable, Category="Cards")
+	virtual FUCard Draw();
+	
+	UFUNCTION(BlueprintCallable, Category="Cards")
 	static FString ToText(FUCard Card)
 	{
 		FStringFormatOrderedArguments Args;
-		Args.Add(FNumberUtil::GetName(Card.Suit));
 		Args.Add(FNumberUtil::GetNumber(Card.Number));
+		Args.Add(FNumberUtil::GetName(Card.Suit));
 		return FString::Format(TEXT("{0}{1}"), Args);
+	}
+
+	UFUNCTION(BlueprintCallable, Category="Cards")
+	static FSlateBrush ToBrush(FUCard Card)
+	{
+		TAssetPtr<UTexture2D> icon;
+		FStringFormatOrderedArguments Args;
+		Args.Add(ToText(Card));;
+		return FSlateImageBrush(FString::Format(TEXT("D:\\Code\\AITH_Unreal\\Content\\Art\\Cards2D\\{0}.jpg"), Args), FVector2D(100, 100));
 	}
 };
