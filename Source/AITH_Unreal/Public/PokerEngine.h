@@ -118,4 +118,9 @@ struct AITH_UNREAL_API FCoinAmount {
 	{
 		return (Amount.Amount1*ValueTable.Value1)+(Amount.Amount2*ValueTable.Value2)+(Amount.Amount3*ValueTable.Value3)+(Amount.Amount4*ValueTable.Value4)+(Amount.Amount5*ValueTable.Value5);
 	}
+
+	static FCoinAmount Random()
+	{
+		return FCoinAmount(FMath::RandRange(0,10),FMath::RandRange(0,10),FMath::RandRange(0,10),FMath::RandRange(0,10),FMath::RandRange(0,10));
+	}
 };

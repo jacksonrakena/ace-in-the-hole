@@ -3,6 +3,8 @@
 
 #include "PokerTableState.h"
 
+#include "PokerGameSession.h"
+#include "Kismet/GameplayStatics.h"
 #include "Net/UnrealNetwork.h"
 
 void APokerTableState::BeginPlay()
@@ -10,17 +12,11 @@ void APokerTableState::BeginPlay()
 	Super::BeginPlay();
 	if (GetLocalRole() == ROLE_Authority)
 	{
-		Cards.Emplace(Draw());
-		Cards.Emplace(Draw());
-		Cards.Emplace(Draw());
+		auto gi = Cast<APokerGameSession>(UGameplayStatics::GetGameMode(this)->GameSession.Get());
+		Cards.Emplace(gi->Draw());
+		Cards.Emplace(gi->Draw());
+		Cards.Emplace(gi->Draw());
 	}
-}
-FUCard APokerTableState::Draw()
-{
-	FUCard Card3;
-	Card3.Number = static_cast<ENumber>(FMath::RandRange(0, 12));
-	Card3.Suit = static_cast<ESuit>(FMath::RandRange(0, 3));
-	return Card3;
 }
 void APokerTableState::OnRep_Deck(){}
 void APokerTableState::GetLifetimeReplicatedProps(TArray <FLifetimeProperty>& OutLifetimeProps) const

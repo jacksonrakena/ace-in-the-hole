@@ -30,9 +30,6 @@ public:
 
 	UFUNCTION()
 	virtual void BeginPlay() override;
-
-	UFUNCTION(BlueprintCallable, Category="Cards")
-	virtual FUCard Draw();
 	
 	UFUNCTION(BlueprintCallable, Category="Cards")
 	static FString ToText(FUCard Card)
@@ -48,7 +45,8 @@ public:
 	{
 		TAssetPtr<UTexture2D> icon;
 		FStringFormatOrderedArguments Args;
-		Args.Add(ToText(Card));;
-		return FSlateImageBrush(FString::Format(TEXT("D:\\Code\\AITH_Unreal\\Content\\Art\\Cards2D\\{0}.jpg"), Args), FVector2D(100, 100));
+		Args.Add(ToText(Card));
+		return FSlateImageBrush(LoadObject<UTexture2D>(nullptr, *FString::Format(TEXT("/Game/Art/Cards2D/{0}"), Args)),
+			FVector2D(100, 100));
 	}
 };

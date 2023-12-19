@@ -5,6 +5,10 @@
 
 #include "PokerTableState.h"
 #include "Net/UnrealNetwork.h"
+#include "PokerGameSession.h"
+#include "Kismet/GameplayStatics.h"
+
+class APokerGameSession;
 
 void APokerPlayerController::GetLifetimeReplicatedProps(TArray <FLifetimeProperty>& OutLifetimeProps) const
 {
@@ -17,9 +21,8 @@ void APokerPlayerController::BeginPlay()
 	Super::BeginPlay();
 	if (GetLocalRole() == ROLE_Authority)
 	{
-		auto ts = GetWorld()->GetGameState<APokerTableState>();
-		Cards.Emplace(ts->Draw());
-		Cards.Emplace(ts->Draw());
-		Cards.Emplace(ts->Draw());
+		auto gi = Cast<APokerGameSession>(UGameplayStatics::GetGameMode(this)->GameSession.Get());
+		Cards.Emplace(gi->Draw());
+		Cards.Emplace(gi->Draw()); 
 	}
 }
