@@ -2,11 +2,3 @@
 
 
 #include "PokerEngine.h"
-
-PokerEngine::PokerEngine()
-{
-}
-
-PokerEngine::~PokerEngine()
-{
-}

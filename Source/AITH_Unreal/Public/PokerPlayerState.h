@@ -17,12 +17,12 @@ class AITH_UNREAL_API APokerPlayerState : public APlayerState
 
 public:
 	UPROPERTY(Category = "Cards", Replicated, BlueprintReadWrite)
-	FCoinAmount BetAmount = FCoinAmount::Random();
-	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
-	
-	UFUNCTION(BlueprintCallable, Category = "Bets")
-	FString GetBetState(APokerPlayerState* player)
+	FCoinAmount  BetAmount;
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
+	UFUNCTION()
+	virtual void BeginPlay() override
 	{
-		return FString::FromInt(player->BetAmount.CalculateTotalAmount(BetAmount, FCoinValueTable()));
+		if (GetLocalRole() == ROLE_Authority) BetAmount = FCoinAmount::Random();
 	}
 };

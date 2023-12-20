@@ -10,12 +10,7 @@
 /**
  * 
  */
-class AITH_UNREAL_API PokerEngine
-{
-public:
-	PokerEngine();
-	~PokerEngine();
-};
+
 
 UENUM(BlueprintType)
 enum class ENumber {
@@ -108,19 +103,32 @@ inline FCoinValueTable DefaultValueTable()
 USTRUCT(BlueprintType)
 struct AITH_UNREAL_API FCoinAmount {
 	GENERATED_BODY();
-	int32_t Amount1;
-	int32_t Amount2;
-	int32_t Amount3;
-	int32_t Amount4;
-	int32_t Amount5;
 
-	static int32_t CalculateTotalAmount(const FCoinAmount& Amount, const FCoinValueTable& ValueTable)
-	{
-		return (Amount.Amount1*ValueTable.Value1)+(Amount.Amount2*ValueTable.Value2)+(Amount.Amount3*ValueTable.Value3)+(Amount.Amount4*ValueTable.Value4)+(Amount.Amount5*ValueTable.Value5);
-	}
+	UPROPERTY()
+	uint32 Amount1;
+	UPROPERTY()
+	uint32 Amount2;
+	UPROPERTY()
+	uint32 Amount3;
+	UPROPERTY()
+	uint32 Amount4;
+	UPROPERTY()
+	uint32 Amount5;
 
 	static FCoinAmount Random()
 	{
 		return FCoinAmount(FMath::RandRange(0,10),FMath::RandRange(0,10),FMath::RandRange(0,10),FMath::RandRange(0,10),FMath::RandRange(0,10));
+	}
+};
+
+UCLASS()
+class AITH_UNREAL_API UPokerEngine : public UObject
+{
+	GENERATED_BODY()
+public:
+	UFUNCTION(BlueprintCallable)
+	static float CalculateTotalAmount(const FCoinAmount& Amount, const FCoinValueTable& ValueTable)
+	{
+		return (Amount.Amount1*ValueTable.Value1)+(Amount.Amount2*ValueTable.Value2)+(Amount.Amount3*ValueTable.Value3)+(Amount.Amount4*ValueTable.Value4)+(Amount.Amount5*ValueTable.Value5);
 	}
 };
