@@ -2,7 +2,7 @@
 
 Ace In The Hole is a very early in-development multiplayer Unreal Engine game that allows players to play a variety of poker table games against other players over their local network, Epic Online Services, or (in the future) the Steamworks Relay.
 
-Due to GitHub LFS size restrictions, the GitHub repository is frozen. Further development past November 2023 is done on the [Codeberg repo](https://codeberg.org/jackson/ace-in-the-hole).
+Due to GitHub LFS size restrictions, the GitHub repository is frozen. Further development past November 2023 is done on [my Git server](https://scm.jacksonrakena.com/jackson/ace-in-the-hole).
 
 ## Features
 - Full, 3D, online multiplayer
