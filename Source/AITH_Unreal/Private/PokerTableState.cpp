@@ -24,4 +24,5 @@ void APokerTableState::GetLifetimeReplicatedProps(TArray <FLifetimeProperty>& Ou
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(APokerTableState, Cards);
+	DOREPLIFETIME(APokerTableState, Call);
 }

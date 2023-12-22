@@ -11,6 +11,22 @@
  * 
  */
 
+UENUM(BlueprintType)
+enum class EBetActionType {
+	Raise,
+	CheckOrCall,
+	Fold
+};
+
+UENUM(BlueprintType)
+enum class EPokerStage {
+	Setup,
+	PlayIn,
+	Flop,
+	Turn,
+	River,
+	End
+};
 
 UENUM(BlueprintType)
 enum class ENumber {
@@ -131,4 +147,16 @@ public:
 	{
 		return (Amount.Amount1*ValueTable.Value1)+(Amount.Amount2*ValueTable.Value2)+(Amount.Amount3*ValueTable.Value3)+(Amount.Amount4*ValueTable.Value4)+(Amount.Amount5*ValueTable.Value5);
 	}
+};
+
+USTRUCT(BlueprintType)
+struct AITH_UNREAL_API FBetAction {
+	GENERATED_BODY();
+
+public:
+	UPROPERTY(Category = "Bets", EditAnywhere, BlueprintReadWrite)
+	FCoinAmount Amount;
+
+	UPROPERTY(Category = "Bets", EditAnywhere, BlueprintReadWrite)
+	EBetActionType Type;
 };

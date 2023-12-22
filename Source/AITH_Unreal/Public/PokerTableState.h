@@ -28,6 +28,9 @@ public:
 	UPROPERTY(Category = "State", EditAnywhere, BlueprintReadOnly, Replicated)
 	TArray<FUCard> Cards;
 
+	UPROPERTY(Category = "Cards", BlueprintReadWrite, Replicated)
+	float Call;
+
 	UFUNCTION()
 	virtual void BeginPlay() override;
 	

@@ -8,4 +8,12 @@ void APokerPlayerState::GetLifetimeReplicatedProps(TArray <FLifetimeProperty>& O
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(APokerPlayerState, BetAmount);
+	DOREPLIFETIME(APokerPlayerState, Balance);
+}
+
+void APokerPlayerState::Server_ConfirmHandOption_Implementation(FBetAction action)
+{
+	auto gi = Cast<APokerGameSession>(UGameplayStatics::GetGameMode(this)->GameSession.Get());
+	GEngine->AddOnScreenDebugMessage(0, 10, FColor::Red,
+		                                FString::Printf(TEXT("Raised {%d} {%f}"), action.Type, UPokerEngine::CalculateTotalAmount(action.Amount, FCoinValueTable())));
 }

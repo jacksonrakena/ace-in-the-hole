@@ -49,12 +49,6 @@ public:
 	AAITH_UnrealCharacter();
 	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
-	UFUNCTION(BlueprintPure, Category="Bank")
-	FORCEINLINE float GetBalance() const { return Balance; }
-	
-	UFUNCTION(BlueprintCallable, Category="Bank")
-	void SetBalance(float newBalance);
-
 	//UFUNCTION(BlueprintPure, Category="Cards")
 	//FORCEINLINE TSet<UCard*> GetCards() const { return Cards; }
 	
@@ -65,13 +59,6 @@ protected:
 
 	/** Called for looking input */
 	void Look(const FInputActionValue& Value);
-
-	UPROPERTY(ReplicatedUsing = OnRep_Balance)
-	float Balance = 1000;
-
-	UFUNCTION()
-	void OnRep_Balance();
-	void OnBalanceUpdate();
 			
 
 protected:

@@ -18,20 +18,6 @@ DEFINE_LOG_CATEGORY(LogTemplateCharacter);
 //////////////////////////////////////////////////////////////////////////
 // AAITH_UnrealCharacter
 
-void AAITH_UnrealCharacter::OnRep_Balance()
-{
-	OnBalanceUpdate();
-}
-
-void AAITH_UnrealCharacter::SetBalance(float nb)
-{
-	if (GetLocalRole() == ROLE_Authority)
-	{
-		this->Balance = nb;
-		OnBalanceUpdate();
-	}
-}
-
 AAITH_UnrealCharacter::AAITH_UnrealCharacter()
 {
 	// Set size for collision capsule
@@ -69,26 +55,13 @@ AAITH_UnrealCharacter::AAITH_UnrealCharacter()
 	// Note: The skeletal mesh and anim blueprint references on the Mesh component (inherited from Character) 
 	// are set in the derived blueprint asset named ThirdPersonCharacter (to avoid direct content references in C++)
 	
-	Balance = 1000;
 }
 
 void AAITH_UnrealCharacter::GetLifetimeReplicatedProps(TArray <FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
-	//Replicate current health.
-	DOREPLIFETIME(AAITH_UnrealCharacter, Balance);
 }
-
-void AAITH_UnrealCharacter::OnBalanceUpdate()
-{
-	if (IsLocallyControlled())
-	{
-		// FString balanceMessage = FString::Printf(TEXT("Balance change: %f"), Balance);
-		// GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, balanceMessage);
-	}
-}
-
 
 void AAITH_UnrealCharacter::BeginPlay()
 {

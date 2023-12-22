@@ -18,6 +18,7 @@ class AITH_UNREAL_API APokerGameSession : public AGameSession
 public:
 	UPROPERTY(Category = "Cards", BlueprintReadWrite)
 	TArray<FUCard> Deck;
+	
 
 	APokerGameSession()
 	{
