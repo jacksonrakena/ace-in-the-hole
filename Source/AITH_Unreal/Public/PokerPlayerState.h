@@ -25,6 +25,12 @@ public:
 
 	UPROPERTY(Category = "Bank", Replicated, BlueprintReadWrite)
 	FCoinAmount Balance;
+
+	UPROPERTY(Category= "Cards", Replicated, BlueprintReadWrite)
+	bool InRound;
+
+	UPROPERTY(Category = "Cards", Replicated, BlueprintReadWrite)
+	bool Folded;
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 	UFUNCTION()
@@ -34,6 +40,8 @@ public:
 		{
 			BetAmount = FCoinAmount::Random();
 			Balance = FCoinAmount::Random();
+			InRound = true;
+			Folded = false;
 		}
 	}
 

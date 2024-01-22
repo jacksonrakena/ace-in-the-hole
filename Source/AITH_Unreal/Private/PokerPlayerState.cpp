@@ -11,6 +11,8 @@ void APokerPlayerState::GetLifetimeReplicatedProps(TArray <FLifetimeProperty>& O
 
 	DOREPLIFETIME(APokerPlayerState, BetAmount);
 	DOREPLIFETIME(APokerPlayerState, Balance);
+	DOREPLIFETIME(APokerPlayerState, Folded);
+	DOREPLIFETIME(APokerPlayerState, InRound);
 }
 
 void APokerPlayerState::Server_ConfirmHandOption_Implementation(FBetAction action, APokerPlayerController* caller)
@@ -20,7 +22,15 @@ void APokerPlayerState::Server_ConfirmHandOption_Implementation(FBetAction actio
 	auto bal = state->Balance;
 	bal.Amount5 = 9999;
 	state->Balance = bal;
-	UE_LOG(LogTemp, Display, TEXT("Raised"));
-	GEngine->AddOnScreenDebugMessage(0, 10, FColor::Red,
-		                                FString::Printf(TEXT("Raised {%d} {%f}"), action.Type, UPokerEngine::CalculateTotalAmount(action.Amount, FCoinValueTable())));
+	switch (action.Type)
+	{
+	case EBetActionType::Raise:
+		break;
+	case EBetActionType::CheckOrCall:
+		break;
+	case EBetActionType::Fold:
+		state->Folded = true;
+		break;
+	default: ;
+	}
 }
