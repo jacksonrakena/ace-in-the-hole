@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "PokerEngine.h"
 #include "PokerGameSession.h"
+#include "PokerPlayerController.h"
 #include "GameFramework/PlayerState.h"
 #include "Kismet/GameplayStatics.h"
 #include "GameFramework/GameModeBase.h"
@@ -36,6 +37,6 @@ public:
 		}
 	}
 
-	UFUNCTION(Server, Reliable)
-	virtual void Server_ConfirmHandOption(FBetAction action);
+	UFUNCTION(Server, Reliable, BlueprintCallable)
+	virtual void Server_ConfirmHandOption(FBetAction action, APokerPlayerController* caller);
 };

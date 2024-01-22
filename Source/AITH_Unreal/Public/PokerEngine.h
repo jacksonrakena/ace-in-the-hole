@@ -12,7 +12,7 @@
  */
 
 UENUM(BlueprintType)
-enum class EBetActionType {
+enum class EBetActionType: uint8 {
 	Raise,
 	CheckOrCall,
 	Fold
@@ -137,18 +137,6 @@ struct AITH_UNREAL_API FCoinAmount {
 	}
 };
 
-UCLASS()
-class AITH_UNREAL_API UPokerEngine : public UObject
-{
-	GENERATED_BODY()
-public:
-	UFUNCTION(BlueprintCallable)
-	static float CalculateTotalAmount(const FCoinAmount& Amount, const FCoinValueTable& ValueTable)
-	{
-		return (Amount.Amount1*ValueTable.Value1)+(Amount.Amount2*ValueTable.Value2)+(Amount.Amount3*ValueTable.Value3)+(Amount.Amount4*ValueTable.Value4)+(Amount.Amount5*ValueTable.Value5);
-	}
-};
-
 USTRUCT(BlueprintType)
 struct AITH_UNREAL_API FBetAction {
 	GENERATED_BODY();
@@ -159,4 +147,25 @@ public:
 
 	UPROPERTY(Category = "Bets", EditAnywhere, BlueprintReadWrite)
 	EBetActionType Type;
+};
+
+UCLASS()
+class AITH_UNREAL_API UPokerEngine : public UObject
+{
+	GENERATED_BODY()
+public:
+	UFUNCTION(BlueprintCallable)
+	static float CalculateTotalAmount(const FCoinAmount& Amount, const FCoinValueTable& ValueTable)
+	{
+		return (Amount.Amount1*ValueTable.Value1)+(Amount.Amount2*ValueTable.Value2)+(Amount.Amount3*ValueTable.Value3)+(Amount.Amount4*ValueTable.Value4)+(Amount.Amount5*ValueTable.Value5);
+	}
+
+	UFUNCTION(BlueprintCallable)
+	static FBetAction MakeBetActionEnum(const FCoinAmount Amount, const EBetActionType Type)
+	{
+		auto fb = FBetAction();
+		fb.Amount = Amount;
+		fb.Type = Type;
+		return fb;
+	}
 };
